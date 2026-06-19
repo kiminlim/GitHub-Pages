@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>칭다오 3박 4일 최적 일정표</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Noto Sans KR) -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f3f4f6;
+        }
+        /* Custom scrollbar for mobile dynamic experience */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="max-w-md mx-auto min-h-screen bg-gray-50 shadow-2xl flex flex-col justify-between relative pb-20">
+
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-red-500 to-amber-500 text-white p-5 sticky top-0 z-50 rounded-b-2xl shadow-md">
+        <div class="flex justify-between items-center mb-2">
+            <span class="bg-white/20 text-xs px-3 py-1 rounded-full font-medium">3박 4일 완벽 동선</span>
+            <div class="flex space-x-2">
+                <button onclick="openTipModal()" class="text-white hover:text-amber-100 transition">
+                    <i class="fa-solid fa-lightbulb text-lg"></i>
+                </button>
+                <button onclick="shareItinerary()" class="text-white hover:text-amber-100 transition">
+                    <i class="fa-solid fa-share-nodes text-lg"></i>
+                </button>
+            </div>
+        </div>
+        <h1 class="text-2xl font-black tracking-tight">칭다오 힐링 & 축제 투어</h1>
+        <p class="text-sm text-amber-50 opacity-90 mt-1">온천 ➡️ 올드타운 ➡️ 맥주축제 ➡️ 쇼핑</p>
+        
+        <!-- Accommodation Status Row -->
+        <div class="mt-4 bg-white/10 backdrop-blur-md rounded-xl p-3 text-xs flex justify-between items-center border border-white/10">
+            <div class="text-center flex-1">
+                <p class="text-[10px] text-amber-200">1일차 숙소</p>
+                <p class="font-bold truncate">나라다 리조트</p>
+            </div>
+            <div class="text-amber-300 px-1"><i class="fa-solid fa-chevron-right text-[10px]"></i></div>
+            <div class="text-center flex-1">
+                <p class="text-[10px] text-amber-200">2일차 숙소</p>
+                <p class="font-bold truncate">시내 (푸신/오렌지)</p>
+            </div>
+            <div class="text-amber-300 px-1"><i class="fa-solid fa-chevron-right text-[10px]"></i></div>
+            <div class="text-center flex-1">
+                <p class="text-[10px] text-amber-200">3일차 숙소</p>
+                <p class="font-bold truncate">윈덤 황다오</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 p-4 space-y-3.5 overflow-y-auto">
+        
+        <!-- Interactive Tip Notification Banner -->
+        <div class="bg-amber-50 border-l-4 border-amber-500 p-3 rounded-r-xl shadow-sm flex items-start space-x-3 cursor-pointer hover:bg-amber-100 transition" onclick="openTipModal()">
+            <span class="text-amber-600 mt-0.5"><i class="fa-solid fa-suitcase"></i></span>
+            <div class="flex-1 text-xs">
+                <span class="font-bold text-amber-800">동선 & 짐 보관 핵심 비법!</span>
+                <p class="text-gray-600 mt-1 text-[11px]">3일차 황다오 이동 시 캐리어는 꼭 믹스몰 보관함에 맡기세요. (자세히 보기 클릭)</p>
+            </div>
+            <span class="text-amber-400"><i class="fa-solid fa-chevron-right text-xs"></i></span>
+        </div>
+
+        <!-- Tab Bar (Days) - Adjusted margin and sticky top position to reduce gap -->
+        <div class="flex bg-gray-200 p-1 rounded-xl sticky top-[165px] z-40 shadow-sm !mt-2">
+            <button onclick="switchTab(1)" id="tab-1" class="tab-btn flex-1 py-2.5 text-center text-xs font-bold rounded-lg transition-all bg-white text-red-600 shadow-sm">
+                Day 1 <span class="block text-[9px] font-normal mt-0.5">입국/온천</span>
+            </button>
+            <button onclick="switchTab(2)" id="tab-2" class="tab-btn flex-1 py-2.5 text-center text-xs font-medium rounded-lg text-gray-500 transition-all hover:text-gray-800">
+                Day 2 <span class="block text-[9px] font-normal mt-0.5">올드타운</span>
+            </button>
+            <button onclick="switchTab(3)" id="tab-3" class="tab-btn flex-1 py-2.5 text-center text-xs font-medium rounded-lg text-gray-500 transition-all hover:text-gray-800">
+                Day 3 <span class="block text-[9px] font-normal mt-0.5">맥주축제</span>
+            </button>
+            <button onclick="switchTab(4)" id="tab-4" class="tab-btn flex-1 py-2.5 text-center text-xs font-medium rounded-lg text-gray-500 transition-all hover:text-gray-800">
+                Day 4 <span class="block text-[9px] font-normal mt-0.5">출국/여유</span>
+            </button>
+        </div>
+
+        <!-- Progress Tracker Section -->
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-xs font-bold text-gray-700"><i class="fa-solid fa-person-walking text-red-500 mr-1"></i> 오늘 일정 달성도</span>
+                <span id="progress-text" class="text-xs font-bold text-red-600">0%</span>
+            </div>
+            <div class="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                <div id="progress-bar" class="bg-gradient-to-r from-red-500 to-amber-500 h-full w-0 transition-all duration-500"></div>
+            </div>
+        </div>
+
+        <!-- Timeline Section -->
+        <div class="space-y-4">
+            
+            <!-- DAY 1 CONTENT -->
+            <div id="content-1" class="tab-content space-y-4">
+                <div class="bg-gradient-to-r from-red-50 to-orange-50 p-3 rounded-xl border border-orange-100 text-xs text-orange-800 flex justify-between items-center">
+                    <span>📍 <strong>공항 및 청도 북부 영역</strong> 이동 최적화 동선</span>
+                    <span class="bg-orange-200 px-2 py-0.5 rounded-full text-[10px] font-bold">리조트 온천</span>
+                </div>
+
+                <!-- Timeline Item 1 -->
+                <div class="relative pl-8 pb-5 border-l-2 border-dashed border-red-200 last:border-0 last:pb-0">
+                    <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-red-500 border-4 border-white flex items-center justify-center"></div>
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <span class="text-[11px] font-bold text-gray-400">16:00 ~ 17:00</span>
+                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">칭다오 교동공항 도착</h3>
+                            <p class="text-xs text-gray-500 mt-1">도착 후 신속한 입국 심사 및 짐 찾기</p>
+                        </div>
+                        <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-red-500 focus:ring-red-400 border-gray-300">
+                    </div>
+                </div>
+
+                <!-- Transport Item -->
+                <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs flex items-center justify-between text-gray-600 ml-4 my-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-blue-600 font-bold"><i class="fa-solid fa-taxi"></i> 택시 약 45분</span>
+                        <span class="text-gray-300">|</span>
+                        <span class="font-medium">공항 ➡️ 나라다 리조트</span>
+                    </div>
+                    <span class="text-gray-400 text-[11px]">고속도로 경유</span>
+                </div>
+
+                <!-- Timeline Item 2 -->
+                <div class="relative pl-8 pb-5 border-l-2 border-dashed border-red-200 last:border-0 last:pb-0">
+                    <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-red-500 border-4 border-white flex items-center justify-center"></div>
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <span class="text-[11px] font-bold text-gray-400">18:00 ~ 19:30</span>
+                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">호텔 체크인 및 휴식</h3>
+                            <p class="text-xs text-gray-500 mt-1">나라다 리조트 체크인 후 간단한 저녁 식사</p>
+                        </div>
+                        <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-red-500 focus:ring-red-400 border-gray-300">
+                    </div>
+                </div>
+
+                <!-- Transport Item -->
+                <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs flex items-center justify-between text-gray-600 ml-4 my-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-blue-600 font-bold"><i class="fa-solid fa-taxi"></i> 택시 약 15~20분</span>
+                        <span class="text-gray-300">|</span>
+                        <span class="font-medium">리조트 ➡️ 청도 불야성</span>
+                    </div>
+                    <span class="text-gray-400 text-[11px]">약 8.5km</span>
+                </div>
+
+                <!-- Timeline Item 3 -->
+                <div class="relative pl-8 pb-5 border-l-2 border-dashed border-red-200 last:border-0 last:pb-0">
+                    <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-red-500 border-4 border-white flex items-center justify-center"></div>
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <span class="text-[11px] font-bold text-gray-400">19:30 ~ 21:30</span>
+                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">청도 불야성 (부야청) 야경</h3>
+                            <span class="inline-block bg-amber-100 text-amber-800 text-[9px] px-2 py-0.5 rounded font-bold mt-1">강력 추천 🌟</span>
+                            <p class="text-xs text-gray-500 mt-1">화려한 중국풍 야외 조명쇼 감상 및 길거리 만두, 양꼬치 등 로컬 간식 시식</p>
+                        </div>
+                        <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-red-500 focus:ring-red-400 border-gray-300">
+                    </div>
+                </div>
+
+                <!-- Transport Item -->
+                <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs flex items-center justify-between text-gray-600 ml-4 my-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-blue-600 font-bold"><i class="fa-solid fa-taxi"></i> 택시 약 15~20분</span>
+                        <span class="text-gray-300">|</span>
+                        <span class="font-medium">불야성 ➡️ 나라다 리조트</span>
+                    </div>
+                    <span class="text-gray-400 text-[11px]">귀가 동선</span>
+                </div>
+
+                <!-- Timeline Item 4 -->
+                <div class="relative pl-8 pb-5 border-l-2 border-dashed border-red-200 last:border-0 last:pb-0">
+                    <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-red-500 border-4 border-white flex items-center justify-center"></div>
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <span class="text-[11px] font-bold text-gray-400">21:30 ~ 자정</span>
+                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">리조트 복귀 및 온천</h3>
+                            <p class="text-xs text-gray-500 mt-1">나라다 리조트 온천 시설에서 비행 피로 풀기</p>
+                        </div>
+                        <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-red-500 focus:ring-red-400 border-gray-300">
+                    </div>
+                </div>
+            </div>
+
+            <!-- DAY 2 CONTENT -->
+            <div id="content-2" class="tab-content space-y-4 hidden">
+                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-3 rounded-xl border border-indigo-100 text-xs text-indigo-800 flex justify-between items-center">
+                    <span>📍 <strong>올드타운 역사·문화 투어</strong> (시내 서부 영역)</span>
+                    <span class="bg-indigo-200 px-2 py-0.5 rounded-full text-[10px] font-bold">맥주 & 야시장</span>
+                </div>
+
+                <!-- Timeline Item 1 -->
+                <div class="relative pl-8 pb-5 border-l-2 border-dashed border-indigo-200 last:border-0 last:pb-0">
+                    <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-indigo-500 border-4 border-white flex items-center justify-center"></div>
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <span class="text-[11px] font-bold text-gray-400">09:00 ~ 10:15</span>
+                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">시내 이동 및 짐 보관</h3>
+                            <p class="text-xs text-gray-500 mt-1">체크아웃 후 시내 숙소(푸신/오렌지)로 이동 (택시 약 1시간) 하여 캐리어 로비 보관</p>
+                        </div>
+                        <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-indigo-500 focus:ring-indigo-400 border-gray-300">
+                    </div>
+                </div>
+
+                <!-- Transport Item -->
+                <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs flex items-center justify-between text-gray-600 ml-4 my-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-blue-600 font-bold"><i class="fa-solid fa-taxi"></i> 택시 약 15분</span>
+                        <span class="text-gray-300">|</span>
+                        <span class="font-medium">시내 숙소 ➡️ 소어산</span>
+                    </div>
+                    <span class="text-gray-400 text-[11px]">약 5km</span>
+                </div>
+
+                <!-- Timeline Item 2 -->
+                <div class="relative pl-8 pb-5 border-l-2 border-dashed border-indigo-200 last:border-0 last:pb-0">
+                    <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-indigo-500 border-4 border-white flex items-center justify-center"></div>
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <span class="text-[11px] font-bold text-gray-400">11:00 ~ 12:30</span>
+                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">소어산 공원 & 대학로</h3>
+                            <p class="text-xs text-gray-500 mt-1">전망대에서 붉은 지붕 바다 조망 ➡️ 도보 하산하며 대학로 빨간벽 포토존/카페거리 산책</p>
+                        </div>
+                        <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-indigo-500 focus:ring-indigo-400 border-gray-300">
+                    </div>
+                </div>
+
+                <!-- Transport Item -->
+                <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-3 text-xs flex items-center justify-between text-gray-600 ml-4 my-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-emerald-600 font-bold"><i class="fa-solid fa-person-walking"></i> 도보 약 10분</span>
+                        <span class="text-gray-300">|</span>
+                        <span class="font-medium">소어산 하산 ➡️ 대학로 입구</span>
+                    </div>
+                    <span class="text-emerald-600 text-[10px] bg-emerald-100 px-1.5 py-0.5 rounded font-bold">도보 권장 🚶‍♂️</span>
+                </div>
+
+                <!-- Timeline Item 3 -->
+                <div class="relative pl-8 pb-5 border-l-2 border-dashed border-indigo-200 last:border-0 last:pb-0">
+                    <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-indigo-500 border-4 border-white flex items-center justify-center"></div>
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <span class="text-[11px] font-bold text-gray-400">12:30 ~ 13:30</span>
+                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">대학로 로컬 맛집 점심</h3>
+                            <p class="text-xs text-gray-500 mt-1">골목길 아기자기한 상점가 구경 후 맛있는 로컬 중식 혹은 퓨전 요리 점심 식사</p>
+                        </div>
+                        <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-indigo-500 focus:ring-indigo-400 border-gray-300">
+                    </div>
+                </div>
+
+                <!-- Transport Item -->
+                <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-3 text-xs flex items-center justify-between text-gray-600 ml-4 my-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-emerald-600 font-bold"><i class="fa-solid fa-person-walking"></i> 도보 약 12분</span>
+                        <span class="text-gray-300">|</span>
+                        <span class="font-medium">대학로 ➡️ 영빈관</span>
+                    </div>
+                    <span class="text-gray-400 text-[11px]">택시 기본거리(5분)</span>
+                </div>
+
+                <!-- Timeline Item 4 -->
+                <div class="relative pl-8 pb-5 border-l-2 border-dashed border-indigo-200 last:border-0 last:pb-0">
+                    <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-indigo-500 border-4 border-white flex items-center justify-center"></div>
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <span class="text-[11px] font-bold text-gray-400">13:30 ~ 14:40</span>
+                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">영빈관 (독일 총독관저)</h3>
+                            <p class="text-xs text-gray-500 mt-1">유럽 감성의 화려한 독일 총독관저 내부 및 정원 관람</p>
+                        </div>
+                        <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-indigo-500 focus:ring-indigo-400 border-gray-300">
+                    </div>
+                </div>
+
+                <!-- Transport Item -->
+                <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-3 text-xs flex items-center justify-between text-gray-600 ml-4 my-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-emerald-600 font-bold"><i class="fa-solid fa-person-walking"></i> 도보 약 15분</span>
+                        <span class="text-gray-300">|</span>
+                        <span class="font-medium">영빈관 ➡️ 천주교 성당</span>
+                    </div>
+                    <span class="text-gray-400 text-[11px]">내리막길 산책</span>
+                </div>
+
+                <!-- Timeline Item 5 -->
+                <div class="relative pl-8 pb-5 border-l-2 border-dashed border-indigo-200 last:border-0 last:pb-0">
+                    <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-indigo-500 border-4 border-white flex items-center justify-center"></div>
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <span class="text-[11px] font-bold text-gray-400">14:40 ~ 16:30</span>
+                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">올드타운 도보 핵심 코스</h3>
+                            <span class="inline-block bg-blue-100 text-blue-800 text-[9px] px-2 py-0.5 rounded font-bold mt-1">인생샷 코스 📸</span>
+                            <p class="text-xs text-gray-600 font-medium mt-1">천주교 성당 광장 ➡️ 은어항 골목(도보 10분) ➡️ 잔교 바닷길 산책(도보 10분)</p>
+                            <p class="text-[11px] text-red-500 mt-1">💡 꿀팁: 천주교 성당에서 은어항, 잔교까지는 모두 도보 10분 내외로 걷기 좋습니다!</p>
+                        </div>
+                        <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-indigo-500 focus:ring-indigo-400 border-gray-300">
+                    </div>
+                </div>
+
+                <!-- Transport Item -->
+                <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs flex items-center justify-between text-gray-600 ml-4 my-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-blue-600 font-bold"><i class="fa-solid fa-taxi"></i> 택시 약 15분</span>
+                        <span class="text-gray-300">|</span>
+                        <span class="font-medium">잔교 ➡️ 맥주박물관</span>
+                    </div>
+                    <span class="text-gray-400 text-[11px]">약 4.5km</span>
+                </div>
+
+                <!-- Timeline Item 6 -->
+                <div class="relative pl-8 pb-5 border-l-2 border-dashed border-indigo-200 last:border-0 last:pb-0">
+                    <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-indigo-500 border-4 border-white flex items-center justify-center"></div>
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <span class="text-[11px] font-bold text-gray-400">17:00 ~ 18:30</span>
+                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">칭다오 맥주박물관 🍻</h3>
+                            <p class="text-xs text-gray-500 mt-1">맥주의 역사를 공부하고 공장에서 갓 짜낸 신선한 원액 맥주 꿀맛 시음!</p>
+                        </div>
+                        <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-indigo-500 focus:ring-indigo-400 border-gray-300">
+                    </div>
+                </div>
+
+                <!-- Transport Item -->
+                <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-3 text-xs flex items-center justify-between text-gray-600 ml-4 my-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-emerald-600 font-bold"><i class="fa-solid fa-person-walking"></i> 도보 약 12분</span>
+                        <span class="text-gray-300">|</span>
+                        <span class="font-medium">맥주박물관 ➡️ 타이동 야시장</span>
+                    </div>
+                    <span class="text-gray-400 text-[11px]">택시 약 5분</span>
+                </div>
+
+                <!-- Timeline Item 7 -->
+                <div class="relative pl-8 pb-5 border-l-2 border-dashed border-indigo-200 last:border-0 last:pb-0">
+                    <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-indigo-500 border-4 border-white flex items-center justify-center"></div>
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <span class="text-[11px] font-bold text-gray-400">18:30 ~ 20:00</span>
+                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">타이동 야시장 먹방 투어</h3>
+                            <p class="text-xs text-gray-500 mt-1">생동감 넘치는 청도 1등 야시장에서 양꼬치 등 먹거리로 알차게 저녁 해결</p>
+                        </div>
+                        <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-indigo-500 focus:ring-indigo-400 border-gray-300">
+                    </div>
+                </div>
+
+                <!-- Transport Item -->
+                <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs flex items-center justify-between text-gray-600 ml-4 my-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-blue-600 font-bold"><i class="fa-solid fa-taxi"></i> 택시 약 15분</span>
+                        <span class="text-gray-300">|</span>
+                        <span class="font-medium">타이동 ➡️ 오사광장</span>
+                    </div>
+                    <span class="text-gray-400 text-[11px]">약 5.2km</span>
+                </div>
+
+                <!-- Timeline Item 8 -->
+                <div class="relative pl-8 pb-5 border-l-2 border-dashed border-indigo-200 last:border-0 last:pb-0">
+                    <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-indigo-500 border-4 border-white flex items-center justify-center"></div>
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <span class="text-[11px] font-bold text-gray-400">20:30 ~ 21:30</span>
+                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">오사광장 야경 & 빌딩 레이저쇼</h3>
+                            <p class="text-xs text-gray-500 mt-1">칭다오의 랜드마크인 '오월의 바람' 붉은 조각상과 미래지향적 빌딩숲 조명 관람</p>
+                        </div>
+                        <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-indigo-500 focus:ring-indigo-400 border-gray-300">
+                    </div>
+                </div>
+            </div>
+
+            <!-- DAY 3 CONTENT -->
+            <div id="content-3" class="tab-content space-y-4 hidden">
+                <div class="bg-gradient-to-r from-emerald-50 to-teal-50 p-3 rounded-xl border border-teal-100 text-xs text-teal-800 flex justify-between items-center">
+                    <span>📍 <strong>쇼핑, 산맥, 그리고 맥주축제 올인</strong> (동부 ➡️ 황다오)</span>
+                    <span class="bg-teal-200 px-2 py-0.5 rounded-full text-[10px] font-bold">빅이벤트 🍺</span>
+                </div>
+
+                <!-- Timeline Item 1 -->
+                <div class="relative pl-8 pb-5 border-l-2 border-dashed border-teal-200 last:border-0 last:pb-0">
+                    <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-teal-500 border-4 border-white flex items-center justify-center"></div>
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <span class="text-[11px] font-bold text-gray-400">09:00 ~ 11:30</span>
+                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">믹스몰 (완샹청) 쇼핑 & 캐리어 보관</h3>
+                            <p class="text-[11px] text-red-500 font-bold mb-1">🚨 신의 한수: 체크아웃한 짐은 믹스몰 보관소에 보관!</p>
+                            <p class="text-xs text-gray-500">KKV 매장 등에서 트렌디한 카피바라 캐릭터 굿즈 쇼핑 및 기념품 탐방</p>
+                        </div>
+                        <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-teal-500 focus:ring-teal-400 border-gray-300">
+                    </div>
+                </div>
+
+                <!-- Timeline Item 2 -->
+                <div class="relative pl-8 pb-5 border-l-2 border-dashed border-teal-200 last:border-0 last:pb-0">
+                    <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-teal-500 border-4 border-white flex items-center justify-center"></div>
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <span class="text-[11px] font-bold text-gray-400">11:30 ~ 12:30</span>
+                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">완샹청 맛집에서 점심</h3>
+                            <p class="text-xs text-gray-500 mt-1">'선가어물만'에서 소문난 삼치 물만두나 깔끔한 정통 산동 요리 세트 시식</p>
+                        </div>
+                        <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-teal-500 focus:ring-teal-400 border-gray-300">
+                    </div>
+                </div>
+
+                <!-- Transport Item -->
+                <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs flex items-center justify-between text-gray-600 ml-4 my-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-blue-600 font-bold"><i class="fa-solid fa-taxi"></i> 택시 약 30분</span>
+                        <span class="text-gray-300">|</span>
+                        <span class="font-medium">믹스몰 ➡️ 라오산 (태청코스)</span>
+                    </div>
+                    <span class="text-gray-400 text-[11px]">해안도로 질주</span>
+                </div>
+
+                <!-- Timeline Item 3 -->
+                <div class="relative pl-8 pb-5 border-l-2 border-dashed border-teal-200 last:border-0 last:pb-0">
+                    <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-teal-500 border-4 border-white flex items-center justify-center"></div>
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <span class="text-[11px] font-bold text-gray-400">13:00 ~ 15:30</span>
+                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">라오산(노산) 바다 산책</h3>
+                            <p class="text-xs text-gray-500 mt-1">산과 바다가 어우러진 신선의 산. 체력 절약을 위해 해안가를 드라이브하거나 가벼운 산책코스로 절경 구경</p>
+                        </div>
+                        <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-teal-500 focus:ring-teal-400 border-gray-300">
+                    </div>
+                </div>
+
+                <!-- Transport Item -->
+                <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs flex items-center justify-between text-gray-600 ml-4 my-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-blue-600 font-bold"><i class="fa-solid fa-taxi"></i> 택시 약 1시간</span>
+                        <span class="text-gray-300">|</span>
+                        <span class="font-medium">라오산 ➡️ 믹스몰(짐찾기) ➡️ 황다오</span>
+                    </div>
+                    <span class="text-gray-400 text-[11px]">해저터널 경유</span>
+                </div>
+
+                <!-- Timeline Item 4 -->
+                <div class="relative pl-8 pb-5 border-l-2 border-dashed border-teal-200 last:border-0 last:pb-0">
+                    <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-teal-500 border-4 border-white flex items-center justify-center"></div>
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <span class="text-[11px] font-bold text-gray-400">16:30 ~ 17:30</span>
+                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">윈덤 칭다오 호텔 체크인</h3>
+                            <p class="text-xs text-gray-500 mt-1">황다오 윈덤 호텔에 체크인 후, 맥주축제를 편하게 즐길 옷으로 갈아입고 정비하기</p>
+                        </div>
+                        <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-teal-500 focus:ring-teal-400 border-gray-300">
+                    </div>
+                </div>
+
+                <!-- Transport Item -->
+                <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-3 text-xs flex items-center justify-between text-gray-600 ml-4 my-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-emerald-600 font-bold"><i class="fa-solid fa-person-walking"></i> 도보 약 10분</span>
+                        <span class="text-gray-300">|</span>
+                        <span class="font-medium">윈덤 호텔 ➡️ 금사탄 맥주성</span>
+                    </div>
+                    <span class="text-emerald-600 text-[10px] bg-emerald-100 px-1.5 py-0.5 rounded font-bold">초인접 🚶‍♂️</span>
+                </div>
+
+                <!-- Timeline Item 5 -->
+                <div class="relative pl-8 pb-5 border-l-2 border-dashed border-teal-200 last:border-0 last:pb-0">
+                    <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-teal-500 border-4 border-white flex items-center justify-center"></div>
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <span class="text-[11px] font-bold text-gray-400">17:30 ~ 22:00</span>
+                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">금사탄 맥주축제 (메인 이벤트)</h3>
+                            <span class="inline-block bg-emerald-100 text-emerald-800 text-[9px] px-2 py-0.5 rounded font-bold mt-1">최대 하이라이트 🎪</span>
+                            <p class="text-xs text-gray-500 mt-1">세계적인 규모의 맥주 텐트와 야외 공연 관람. 윈덤 호텔과 매우 인접하여 지연 걱정 없이 축제 만끽!</p>
+                        </div>
+                        <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-teal-500 focus:ring-teal-400 border-gray-300">
+                    </div>
+                </div>
+            </div>
+
+            <!-- DAY 4 CONTENT -->
+            <div id="content-4" class="tab-content space-y-4 hidden">
+                <div class="bg-gradient-to-r from-amber-50 to-yellow-50 p-3 rounded-xl border border-yellow-100 text-xs text-yellow-800 flex justify-between items-center">
+                    <span>📍 <strong>여유로운 오전과 완벽한 귀국 동선</strong></span>
+                    <span class="bg-yellow-200 px-2 py-0.5 rounded-full text-[10px] font-bold">집으로 ✈️</span>
+                </div>
+
+                <!-- Timeline Item 1 -->
+                <div class="relative pl-8 pb-5 border-l-2 border-dashed border-yellow-200 last:border-0 last:pb-0">
+                    <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-yellow-500 border-4 border-white flex items-center justify-center"></div>
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <span class="text-[11px] font-bold text-gray-400">09:30 ~ 10:30</span>
+                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">늦잠, 조식 & 체크아웃</h3>
+                            <p class="text-xs text-gray-500 mt-1">윈덤 호텔의 편안한 베딩 속에서 늦잠 자고 조식 해결 후 여유 있게 체크아웃</p>
+                        </div>
+                        <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-yellow-500 focus:ring-yellow-400 border-gray-300">
+                    </div>
+                </div>
+
+                <!-- Transport Item -->
+                <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs flex items-center justify-between text-gray-600 ml-4 my-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-blue-600 font-bold"><i class="fa-solid fa-taxi"></i> 택시 약 30분</span>
+                        <span class="text-gray-300">|</span>
+                        <span class="font-medium">황다오 ➡️ 오사광장 인근</span>
+                    </div>
+                    <span class="text-gray-400 text-[11px]">해저터널 경유</span>
+                </div>
+
+                <!-- Timeline Item 2 -->
+                <div class="relative pl-8 pb-5 border-l-2 border-dashed border-yellow-200 last:border-0 last:pb-0">
+                    <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-yellow-500 border-4 border-white flex items-center justify-center"></div>
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <span class="text-[11px] font-bold text-gray-400">11:00 ~ 12:30</span>
+                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">낮의 오사광장 & 올림픽 요트경기장</h3>
+                            <p class="text-xs text-gray-500 mt-1">청량한 칭다오 푸른 바다와 고층 빌딩이 한눈에 보이는 요트 선착장 산책</p>
+                        </div>
+                        <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-yellow-500 focus:ring-yellow-400 border-gray-300">
+                    </div>
+                </div>
+
+                <!-- Transport Item -->
+                <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-3 text-xs flex items-center justify-between text-gray-600 ml-4 my-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-emerald-600 font-bold"><i class="fa-solid fa-person-walking"></i> 도보 약 10분</span>
+                        <span class="text-gray-300">|</span>
+                        <span class="font-medium">요트경기장 ➡️ 베이징덕 식당</span>
+                    </div>
+                    <span class="text-gray-400 text-[11px]">광장 해안길 도보</span>
+                </div>
+
+                <!-- Timeline Item 3 -->
+                <div class="relative pl-8 pb-5 border-l-2 border-dashed border-yellow-200 last:border-0 last:pb-0">
+                    <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-yellow-500 border-4 border-white flex items-center justify-center"></div>
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <span class="text-[11px] font-bold text-gray-400">12:30 ~ 14:00</span>
+                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">최후의 만찬 (베이징덕) 🦆</h3>
+                            <p class="text-xs text-gray-500 mt-1">오사광장 근처 맛집에서 부드러운 오리구이 전병쌈과 고소한 요리들로 여행 마지막 배 채우기</p>
+                        </div>
+                        <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-yellow-500 focus:ring-yellow-400 border-gray-300">
+                    </div>
+                </div>
+
+                <!-- Transport Item -->
+                <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-3 text-xs flex items-center justify-between text-gray-600 ml-4 my-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-emerald-600 font-bold"><i class="fa-solid fa-person-walking"></i> 도보 약 5분</span>
+                        <span class="text-gray-300">|</span>
+                        <span class="font-medium">식당 ➡️ 근처 카페</span>
+                    </div>
+                    <span class="text-gray-400 text-[11px]">골목 인근 이동</span>
+                </div>
+
+                <!-- Timeline Item 4 -->
+                <div class="relative pl-8 pb-5 border-l-2 border-dashed border-yellow-200 last:border-0 last:pb-0">
+                    <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-yellow-500 border-4 border-white flex items-center justify-center"></div>
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <span class="text-[11px] font-bold text-gray-400">14:00 ~ 15:00</span>
+                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">마지막 꿀땅콩 및 커피 충전 ☕</h3>
+                            <p class="text-xs text-gray-500 mt-1">전망 좋은 카페에서 휴식하며 마트에서 청도 꿀땅콩, 맥주 등 최종 쇼핑</p>
+                        </div>
+                        <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-yellow-500 focus:ring-yellow-400 border-gray-300">
+                    </div>
+                </div>
+
+                <!-- Transport Item -->
+                <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs flex items-center justify-between text-gray-600 ml-4 my-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-blue-600 font-bold"><i class="fa-solid fa-train"></i> 지하철 8호선 약 1시간</span>
+                        <span class="text-gray-300">|</span>
+                        <span class="font-medium">오사광장 인근 ➡️ 교동 공항</span>
+                    </div>
+                    <span class="text-gray-400 text-[11px]">택시 약 50분 소요</span>
+                </div>
+
+                <!-- Timeline Item 5 -->
+                <div class="relative pl-8 pb-5 border-l-2 border-dashed border-yellow-200 last:border-0 last:pb-0">
+                    <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-yellow-500 border-4 border-white flex items-center justify-center"></div>
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <span class="text-[11px] font-bold text-gray-400">16:00 ~ 17:00</span>
+                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">공항 안전 도착 및 체크인</h3>
+                            <p class="text-xs text-gray-500 mt-1">오후 5시 전 공항에 여유 있게 도착하여 면세품 수령 및 무사 귀국 탑승 수속</p>
+                        </div>
+                        <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-yellow-500 focus:ring-yellow-400 border-gray-300">
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Bottom Navigation (Mini Budget & Utilities) -->
+    <nav class="bg-white border-t border-gray-200 fixed bottom-0 left-0 right-0 max-w-md mx-auto p-3 flex justify-around items-center z-50 rounded-t-2xl shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
+        <button onclick="switchTab(1)" class="flex flex-col items-center space-y-1 text-gray-400 hover:text-red-500 focus:outline-none transition">
+            <i class="fa-solid fa-map-location-dot text-lg"></i>
+            <span class="text-[10px] font-bold">일정 보기</span>
+        </button>
+        <button onclick="openBudgetModal()" class="flex flex-col items-center space-y-1 text-gray-400 hover:text-amber-500 focus:outline-none transition">
+            <i class="fa-solid fa-wallet text-lg"></i>
+            <span class="text-[10px] font-bold font-medium">예산 계산</span>
+        </button>
+        <button onclick="openTipModal()" class="flex flex-col items-center space-y-1 text-gray-400 hover:text-orange-500 focus:outline-none transition">
+            <i class="fa-solid fa-suitcase-rolling text-lg"></i>
+            <span class="text-[10px] font-bold font-medium">짐 & 교통 꿀팁</span>
+        </button>
+    </nav>
+
+    <!-- TIP MODAL -->
+    <div id="tip-modal" class="hidden fixed inset-0 z-[100] bg-black/60 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-2xl relative animate-in fade-in zoom-in duration-200">
+            <button onclick="closeTipModal()" class="absolute right-4 top-4 text-gray-400 hover:text-gray-600">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <div class="flex items-center space-x-2 text-amber-500">
+                <i class="fa-solid fa-lightbulb text-xl"></i>
+                <h3 class="font-bold text-lg text-gray-900">현지 이동 & 짐 보관 핵심 비법</h3>
+            </div>
+            
+            <div class="space-y-3 text-xs text-gray-600 overflow-y-auto max-h-80 pr-1">
+                <div class="bg-amber-50 p-3 rounded-xl border border-amber-100">
+                    <p class="font-bold text-amber-900 mb-1">💼 3일차 짐 보관 '신의 한 수'</p>
+                    <p>시내에서 황다오 숙소(윈덤)로 갈 때, 온종일 무거운 캐리어를 끌고 라오산을 오르는 실수를 범하기 쉽습니다. 아침에 체크아웃 후 <strong>믹스몰(완샹청) 물품 보관소</strong>에 짐을 맡기면 두 손이 가볍게 관광할 수 있습니다!</p>
+                </div>
+                <div class="bg-blue-50 p-3 rounded-xl border border-blue-100">
+                    <p class="font-bold text-blue-900 mb-1">🚕 올드타운(2일차) 숏컷 팁</p>
+                    <p>소어산에서 잔교까지 이어지는 도보 투어는 아름답지만 꽤 체력 소모가 큽니다. 구간별로 힘들 때는 무리해서 걷지 마시고 중국의 <strong>택시 기본요금 거리</strong>를 적극적으로 사용하여 체력을 비축하세요.</p>
+                </div>
+                <div class="bg-green-50 p-3 rounded-xl border border-green-100">
+                    <p class="font-bold text-green-900 mb-1">🍺 황다오 축제 이동</p>
+                    <p>3일차 투숙하는 윈덤 청도는 금사탄 맥주축제 장소(금사탄 맥주성)와 아주 가까워 늦게까지 축제를 즐기신 후 지치지 않고 곧바로 복귀하기에 최적입니다.</p>
+                </div>
+            </div>
+            <button onclick="closeTipModal()" class="w-full bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold py-3 rounded-xl transition shadow-md">확인했습니다</button>
+        </div>
+    </div>
+
+    <!-- BUDGET MODAL -->
+    <div id="budget-modal" class="hidden fixed inset-0 z-[100] bg-black/60 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-2xl relative">
+            <button onclick="closeBudgetModal()" class="absolute right-4 top-4 text-gray-400 hover:text-gray-600">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <div class="flex items-center space-x-2 text-emerald-600">
+                <i class="fa-solid fa-wallet text-xl"></i>
+                <h3 class="font-bold text-lg text-gray-900">3박 4일 간이 예산 계산기</h3>
+            </div>
+            <p class="text-[11px] text-gray-400">대략적인 1인당 소요 예상비용을 모의 계산해보세요.</p>
+            
+            <div class="space-y-3 text-xs">
+                <div class="flex justify-between items-center bg-gray-50 p-2.5 rounded-xl">
+                    <span class="text-gray-700 font-medium">🏨 숙소 예산 (총 3박)</span>
+                    <input type="number" id="budget-hotel" value="250000" class="w-24 text-right bg-white border border-gray-300 rounded px-2 py-1 font-bold text-gray-800" oninput="calculateTotalBudget()"> 원
+                </div>
+                <div class="flex justify-between items-center bg-gray-50 p-2.5 rounded-xl">
+                    <span class="text-gray-700 font-medium">🚕 교통비 (택시 등)</span>
+                    <input type="number" id="budget-taxi" value="80000" class="w-24 text-right bg-white border border-gray-300 rounded px-2 py-1 font-bold text-gray-800" oninput="calculateTotalBudget()"> 원
+                </div>
+                <div class="flex justify-between items-center bg-gray-50 p-2.5 rounded-xl">
+                    <span class="text-gray-700 font-medium">🍔 식비 / 야시장 / 맥주</span>
+                    <input type="number" id="budget-food" value="150000" class="w-24 text-right bg-white border border-gray-300 rounded px-2 py-1 font-bold text-gray-800" oninput="calculateTotalBudget()"> 원
+                </div>
+                <div class="flex justify-between items-center bg-gray-50 p-2.5 rounded-xl">
+                    <span class="text-gray-700 font-medium">🛍️ 쇼핑 (굿즈, 꿀땅콩)</span>
+                    <input type="number" id="budget-shopping" value="50000" class="w-24 text-right bg-white border border-gray-300 rounded px-2 py-1 font-bold text-gray-800" oninput="calculateTotalBudget()"> 원
+                </div>
+
+                <div class="bg-emerald-50 p-3 rounded-2xl flex justify-between items-center border border-emerald-100 mt-4">
+                    <span class="font-bold text-emerald-900">💵 총 예상합계 (1인)</span>
+                    <span id="total-budget" class="font-black text-emerald-600 text-sm">530,000 원</span>
+                </div>
+            </div>
+            <button onclick="closeBudgetModal()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-3 rounded-xl transition shadow-md">완료</button>
+        </div>
+    </div>
+
+    <!-- NOTIFICATION POPUP (Toast) -->
+    <div id="toast" class="hidden fixed bottom-24 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs font-bold py-2.5 px-5 rounded-full shadow-lg z-[200] transition-opacity duration-300 opacity-0">
+        일정 링크가 성공적으로 복사되었습니다!
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Tab switching logic
+        function switchTab(dayNum) {
+            // Hide all tab contents
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(content => content.classList.add('hidden'));
+
+            // Show target content
+            document.getElementById(`content-${dayNum}`).classList.remove('hidden');
+
+            // Reset tab button styles
+            const buttons = document.querySelectorAll('.tab-btn');
+            buttons.forEach(btn => {
+                btn.classList.remove('bg-white', 'text-red-600', 'text-indigo-600', 'text-teal-600', 'text-yellow-600', 'shadow-sm', 'font-bold');
+                btn.classList.add('text-gray-500', 'font-medium');
+            });
+
+            // Set dynamic colors matching each day theme
+            const activeBtn = document.getElementById(`tab-${dayNum}`);
+            activeBtn.classList.remove('text-gray-500', 'font-medium');
+            activeBtn.classList.add('bg-white', 'shadow-sm', 'font-bold');
+
+            if (dayNum === 1) activeBtn.classList.add('text-red-600');
+            else if (dayNum === 2) activeBtn.classList.add('text-indigo-600');
+            else if (dayNum === 3) activeBtn.classList.add('text-teal-600');
+            else if (dayNum === 4) activeBtn.classList.add('text-yellow-600');
+
+            // Recalculate achievement progress bar for current day
+            updateProgress();
+        }
+
+        // Live Dynamic Checkbox Tracker
+        function updateProgress() {
+            const currentTab = document.querySelector('.tab-content:not(.hidden)');
+            const checkboxes = currentTab.querySelectorAll('.todo-check');
+            const checkedBoxes = currentTab.querySelectorAll('.todo-check:checked');
+
+            if (checkboxes.length === 0) return;
+
+            const percentage = Math.round((checkedBoxes.length / checkboxes.length) * 100);
+            
+            const progressBar = document.getElementById('progress-bar');
+            const progressText = document.getElementById('progress-text');
+            
+            progressBar.style.width = `${percentage}%`;
+            progressText.innerText = `${percentage}%`;
+
+            // Dynamic color shift depending on progress
+            if (percentage === 100) {
+                progressText.innerHTML = `<span class="text-green-600 font-black"><i class="fa-solid fa-circle-check"></i> 오늘일정 완수!</span>`;
+            } else {
+                progressText.innerText = `${percentage}%`;
+            }
+        }
+
+        // Budget Calculations
+        function calculateTotalBudget() {
+            const hotel = parseInt(document.getElementById('budget-hotel').value) || 0;
+            const taxi = parseInt(document.getElementById('budget-taxi').value) || 0;
+            const food = parseInt(document.getElementById('budget-food').value) || 0;
+            const shopping = parseInt(document.getElementById('budget-shopping').value) || 0;
+
+            const total = hotel + taxi + food + shopping;
+            document.getElementById('total-budget').innerText = total.toLocaleString() + ' 원';
+        }
+
+        // Modals Management
+        function openTipModal() {
+            document.getElementById('tip-modal').classList.remove('hidden');
+        }
+        function closeTipModal() {
+            document.getElementById('tip-modal').classList.add('hidden');
+        }
+
+        function openBudgetModal() {
+            document.getElementById('budget-modal').classList.remove('hidden');
+        }
+        function closeBudgetModal() {
+            document.getElementById('budget-modal').classList.add('hidden');
+        }
+
+        // Custom Share Simulator using clipboard API
+        function shareItinerary() {
+            // Simulated share link
+            const shareText = `칭다오 3박 4일 최적 이동 일정표를 함께 공유합니다! (1일차: 나라다 온천 ➡️ 2일차: 올드타운/타동야시장 ➡️ 3일차: 라오산/금사탄 맥주축제 ➡️ 4일차: 오사광장)`;
+            
+            // Native iframe friendly clipboard copy logic
+            const tempInput = document.createElement("input");
+            tempInput.value = window.location.href;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand("copy");
+            document.body.removeChild(tempInput);
+
+            // Pop toast alert
+            const toast = document.getElementById('toast');
+            toast.classList.remove('hidden');
+            setTimeout(() => { toast.classList.add('opacity-100'); }, 50);
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                setTimeout(() => { toast.classList.add('hidden'); }, 300);
+            }, 2500);
+        }
+
+        // Initialize progress tracker when application loaded
+        window.onload = function() {
+            updateProgress();
+        };
+    </script>
+</body>
+</html>
