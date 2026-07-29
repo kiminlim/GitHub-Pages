@@ -10,12 +10,14 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts (Noto Sans KR) -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <!-- Leaflet (동선 지도) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         body {
             font-family: 'Noto Sans KR', sans-serif;
             background-color: #f3f4f6;
         }
-        /* Custom scrollbar for mobile dynamic experience */
         .no-scrollbar::-webkit-scrollbar {
             display: none;
         }
@@ -27,130 +29,144 @@
 </head>
 <body class="max-w-md mx-auto min-h-screen bg-gray-50 shadow-2xl flex flex-col justify-between relative pb-20">
 
-    <!-- Header -->
-    <header class="bg-gradient-to-r from-red-500 to-amber-500 text-white p-5 sticky top-0 z-50 rounded-b-2xl shadow-md">
-        <div class="flex justify-between items-center mb-2">
-            <span class="bg-white/20 text-xs px-3 py-1 rounded-full font-medium">4박 5일 힐링 완벽 동선</span>
+    <!-- Header (Sticky Top 0) -->
+    <header id="main-header" class="bg-gradient-to-r from-red-500 to-amber-500 text-white p-4 sticky top-0 z-50 rounded-b-2xl shadow-md">
+        <div class="flex justify-between items-center mb-1.5">
+            <span class="bg-white/20 text-xs px-2.5 py-0.5 rounded-full font-medium">4박 5일 완벽 동선</span>
             <div class="flex space-x-2">
-                <button onclick="openTipModal()" class="text-white hover:text-amber-100 transition">
-                    <i class="fa-solid fa-lightbulb text-lg"></i>
+                <button onclick="openTipModal()" class="text-white hover:text-amber-100 transition" title="꿀팁">
+                    <i class="fa-solid fa-lightbulb text-base"></i>
                 </button>
-                <button onclick="shareItinerary()" class="text-white hover:text-amber-100 transition">
-                    <i class="fa-solid fa-share-nodes text-lg"></i>
+                <button onclick="shareItinerary()" class="text-white hover:text-amber-100 transition" title="공유">
+                    <i class="fa-solid fa-share-nodes text-base"></i>
                 </button>
             </div>
         </div>
-        <h1 class="text-2xl font-black tracking-tight">칭다오 힐링 & 축제 투어</h1>
-        <p class="text-sm text-amber-50 opacity-90 mt-1">공항 온천 ➡️ 전통 한푸 ➡️ 올드타운 ➡️ 맥주축제</p>
+        <h1 class="text-xl font-black tracking-tight">칭다오 힐링 & 축제 투어</h1>
+        <p class="text-[11px] text-amber-50 opacity-90 mt-0.5">1元 = 213.92원 환율 적용 | 고덕지도 연동</p>
         
         <!-- Accommodation Status Row -->
-        <div class="mt-4 bg-white/10 backdrop-blur-md rounded-xl p-3 text-[10px] flex justify-between items-center border border-white/10 overflow-x-auto no-scrollbar whitespace-nowrap">
+        <div class="mt-2.5 bg-white/10 backdrop-blur-md rounded-xl p-2 text-[10px] flex justify-between items-center border border-white/10 overflow-x-auto no-scrollbar whitespace-nowrap">
             <div class="text-center min-w-[70px]">
-                <p class="text-[9px] text-amber-200">1일차 숙소 (7/31)</p>
-                <p class="font-bold truncate text-white">아투어 공항</p>
+                <p class="text-[9px] text-amber-200">1일차 (7/31)</p>
+                <p class="font-bold truncate text-white">포시즌스 페어뷰</p>
             </div>
             <div class="text-amber-300 px-1"><i class="fa-solid fa-chevron-right text-[8px]"></i></div>
-            <div class="text-center min-w-[70px]">
-                <p class="text-[9px] text-amber-200">2일차 숙소 (8/1)</p>
-                <p class="font-bold truncate text-white">나라다 온천</p>
+            <div class="text-center min-w-[80px]">
+                <p class="text-[9px] text-amber-200">2~3일차 (8/1~2)</p>
+                <p class="font-bold truncate text-white">크리스탈 오렌지</p>
             </div>
             <div class="text-amber-300 px-1"><i class="fa-solid fa-chevron-right text-[8px]"></i></div>
-            <div class="text-center min-w-[70px]">
-                <p class="text-[9px] text-amber-200">3일차 숙소 (8/2)</p>
-                <p class="font-bold truncate text-white">시내 호텔</p>
-            </div>
-            <div class="text-amber-300 px-1"><i class="fa-solid fa-chevron-right text-[8px]"></i></div>
-            <div class="text-center min-w-[70px]">
-                <p class="text-[9px] text-amber-200">4일차 숙소 (8/3)</p>
-                <p class="font-bold truncate text-white">윈덤 황다오</p>
+            <div class="text-center min-w-[75px]">
+                <p class="text-[9px] text-amber-200">4일차 (8/3)</p>
+                <p class="font-bold truncate text-white">임프레션 호텔</p>
             </div>
         </div>
     </header>
 
     <!-- Main Content Area -->
-    <main class="flex-1 p-4 space-y-3.5 overflow-y-auto">
+    <main class="flex-1 p-3.5 space-y-3 overflow-y-auto">
         
-        <!-- Interactive Tip Notification Banner -->
-        <div class="bg-amber-50 border-l-4 border-amber-500 p-3 rounded-r-xl shadow-sm flex items-start space-x-3 cursor-pointer hover:bg-amber-100 transition" onclick="openTipModal()">
-            <span class="text-amber-600 mt-0.5"><i class="fa-solid fa-suitcase"></i></span>
+        <!-- Interactive Recommendation Banner -->
+        <div class="bg-amber-50 border-l-4 border-amber-500 p-2.5 rounded-r-xl shadow-sm flex items-start space-x-2.5 cursor-pointer hover:bg-amber-100 transition" onclick="openRecommendModal()">
+            <span class="text-amber-600 mt-0.5"><i class="fa-solid fa-utensils"></i></span>
             <div class="flex-1 text-xs">
-                <span class="font-bold text-amber-800">동선 & 짐 보관 핵심 비법!</span>
-                <p class="text-gray-600 mt-1 text-[11px]">4일차 황다오 이동 시 캐리어는 꼭 믹스몰 보관함에 맡기세요. (자세히 보기 클릭)</p>
+                <span class="font-bold text-amber-900">추천 맛집 & 관광지 총정리!</span>
+                <p class="text-gray-600 mt-0.5 text-[11px]">대홍문, 무예슬거, 훠궈 비교 등 고덕지도 링크 연결</p>
             </div>
-            <span class="text-amber-400"><i class="fa-solid fa-chevron-right text-xs"></i></span>
+            <span class="text-amber-500"><i class="fa-solid fa-chevron-right text-xs"></i></span>
         </div>
 
-        <!-- Tab Bar (Days) - Compact & Dynamic dates and days added -->
-        <div class="flex bg-gray-200 p-1 rounded-xl sticky top-[175px] z-40 shadow-sm !mt-2 overflow-x-auto no-scrollbar">
-            <button onclick="switchTab(1)" id="tab-1" class="tab-btn flex-1 min-w-[72px] py-2.5 text-center text-xs font-bold rounded-lg transition-all bg-white text-red-600 shadow-sm">
+        <!-- Tab Bar (Days) -->
+        <div class="flex bg-gray-200 p-1 rounded-xl shadow-sm overflow-x-auto no-scrollbar">
+            <button onclick="switchTab(1)" id="tab-1" class="tab-btn flex-1 min-w-[65px] py-2 text-center text-xs font-bold rounded-lg transition-all bg-white text-red-600 shadow-sm">
                 Day 1 <span class="block text-[8px] font-normal mt-0.5">7/31 (금)</span>
             </button>
-            <button onclick="switchTab(2)" id="tab-2" class="tab-btn flex-1 min-w-[72px] py-2.5 text-center text-xs font-medium rounded-lg text-gray-500 transition-all hover:text-gray-800">
+            <button onclick="switchTab(2)" id="tab-2" class="tab-btn flex-1 min-w-[65px] py-2 text-center text-xs font-medium rounded-lg text-gray-500 transition-all hover:text-gray-800">
                 Day 2 <span class="block text-[8px] font-normal mt-0.5">8/1 (토)</span>
             </button>
-            <button onclick="switchTab(3)" id="tab-3" class="tab-btn flex-1 min-w-[72px] py-2.5 text-center text-xs font-medium rounded-lg text-gray-500 transition-all hover:text-gray-800">
+            <button onclick="switchTab(3)" id="tab-3" class="tab-btn flex-1 min-w-[65px] py-2 text-center text-xs font-medium rounded-lg text-gray-500 transition-all hover:text-gray-800">
                 Day 3 <span class="block text-[8px] font-normal mt-0.5">8/2 (일)</span>
             </button>
-            <button onclick="switchTab(4)" id="tab-4" class="tab-btn flex-1 min-w-[72px] py-2.5 text-center text-xs font-medium rounded-lg text-gray-500 transition-all hover:text-gray-800">
+            <button onclick="switchTab(4)" id="tab-4" class="tab-btn flex-1 min-w-[65px] py-2 text-center text-xs font-medium rounded-lg text-gray-500 transition-all hover:text-gray-800">
                 Day 4 <span class="block text-[8px] font-normal mt-0.5">8/3 (월)</span>
             </button>
-            <button onclick="switchTab(5)" id="tab-5" class="tab-btn flex-1 min-w-[72px] py-2.5 text-center text-xs font-medium rounded-lg text-gray-500 transition-all hover:text-gray-800">
+            <button onclick="switchTab(5)" id="tab-5" class="tab-btn flex-1 min-w-[65px] py-2 text-center text-xs font-medium rounded-lg text-gray-500 transition-all hover:text-gray-800">
                 Day 5 <span class="block text-[8px] font-normal mt-0.5">8/4 (화)</span>
             </button>
         </div>
 
         <!-- Progress Tracker Section -->
-        <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-            <div class="flex justify-between items-center mb-2">
+        <div class="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
+            <div class="flex justify-between items-center mb-1.5">
                 <span class="text-xs font-bold text-gray-700"><i class="fa-solid fa-person-walking text-red-500 mr-1"></i> 오늘 일정 달성도</span>
                 <span id="progress-text" class="text-xs font-bold text-red-600">0%</span>
             </div>
             <div class="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
                 <div id="progress-bar" class="bg-gradient-to-r from-red-500 to-amber-500 h-full w-0 transition-all duration-500"></div>
             </div>
+            <button onclick="openRouteMap()" class="w-full mt-2.5 bg-red-50 hover:bg-red-100 text-red-600 text-[11px] font-bold py-2 rounded-lg transition flex items-center justify-center space-x-1.5">
+                <i class="fa-solid fa-route"></i>
+                <span>오늘 동선 지도로 보기</span>
+            </button>
         </div>
 
         <!-- Timeline Section -->
-        <div class="space-y-4">
+        <div class="space-y-4 pt-1">
             
             <!-- DAY 1 CONTENT (7/31 금) -->
             <div id="content-1" class="tab-content space-y-4">
                 <div class="bg-gradient-to-r from-red-50 to-orange-50 p-3 rounded-xl border border-orange-100 text-xs text-orange-800 flex justify-between items-center">
-                    <span>📍 <strong>1일차: 칭다오 저녁 도착 및 공항 호텔 휴식</strong></span>
-                    <span class="bg-orange-200 px-2 py-0.5 rounded-full text-[10px] font-bold">인천 출발 ✈️</span>
+                    <span>🔴 <strong>Day 1: 입국 & 공항 포시즌스 페어뷰 체크인</strong></span>
+                    <span class="bg-orange-200 px-2 py-0.5 rounded-full text-[10px] font-bold">휴식 ✈️</span>
                 </div>
 
-                <!-- Timeline Item 1 -->
                 <div class="relative pl-8 pb-5 border-l-2 border-dashed border-red-200 last:border-0 last:pb-0">
                     <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-red-500 border-4 border-white flex items-center justify-center"></div>
                     <div class="flex items-start justify-between">
                         <div>
                             <span class="text-[11px] font-bold text-gray-400">19:20 ~ 20:10</span>
-                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">인천 국제공항 출발 ➡️ 칭다오 교동공항 도착</h3>
+                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">인천(ICN) 출발 ➡️ 칭다오 교동공항(TAO) 도착</h3>
                             <p class="text-xs text-gray-500 mt-1">티웨이항공 TW607편 탑승 (비행시간 약 1시간 50분 소요)</p>
                         </div>
                         <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-red-500 focus:ring-red-400 border-gray-300">
                     </div>
                 </div>
 
-                <!-- Transport Item -->
-                <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs flex items-center justify-between text-gray-600 ml-4 my-2">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-blue-600 font-bold"><i class="fa-solid fa-taxi"></i> 차량 약 10분</span>
-                        <span class="text-gray-300">|</span>
-                        <span class="font-medium">교동 공항 ➡️ 아투어 호텔 공항점</span>
+                <div class="relative pl-8 pb-5 border-l-2 border-dashed border-red-200 last:border-0 last:pb-0">
+                    <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-red-500 border-4 border-white flex items-center justify-center"></div>
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <span class="text-[11px] font-bold text-gray-400">20:10 ~ 21:00</span>
+                            <div class="flex items-center space-x-2 mt-0.5">
+                                <h3 class="font-bold text-gray-800 text-sm">입국 심사 및 수하물 수령</h3>
+                                <a href="https://uri.amap.com/search?keyword=青岛胶东国际机场" target="_blank" class="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold hover:bg-blue-200">🗺️ 지도</a>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">신속한 입국 수속 진행</p>
+                        </div>
+                        <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-red-500 focus:ring-red-400 border-gray-300">
                     </div>
-                    <span class="text-gray-400 text-[11px]">가까운 거리</span>
                 </div>
 
-                <!-- Timeline Item 2 -->
+                <div class="bg-blue-50 border border-blue-100 rounded-xl p-2.5 text-xs flex items-center justify-between text-gray-600 ml-4 my-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-blue-600 font-bold"><i class="fa-solid fa-taxi"></i> 차량 약 10~15분</span>
+                        <span class="text-gray-300">|</span>
+                        <span class="font-medium">공항 ➡️ 포시즌스 페어뷰 호텔</span>
+                    </div>
+                    <span class="text-gray-400 text-[11px]">인접 숙소</span>
+                </div>
+
                 <div class="relative pl-8 pb-5 border-l-2 border-dashed border-red-200 last:border-0 last:pb-0">
                     <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-red-500 border-4 border-white flex items-center justify-center"></div>
                     <div class="flex items-start justify-between">
                         <div>
                             <span class="text-[11px] font-bold text-gray-400">21:00 ~</span>
-                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">아투어 호텔 체크인 및 휴식</h3>
-                            <p class="text-xs text-gray-500 mt-1">공항 근처 가성비 숙소(아투어) 체크인 후 주변 배달 음식(KFC 등) 또는 편의점 털이 후 첫날 가벼운 수면</p>
+                            <div class="flex items-center space-x-2 mt-0.5">
+                                <h3 class="font-bold text-gray-800 text-sm">포시즌스 페어뷰 호텔 체크인</h3>
+                                <a href="https://uri.amap.com/search?keyword=四季美景酒店青岛胶东国际机场店" target="_blank" class="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold hover:bg-blue-200">🗺️ 지도</a>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">호텔 내 휴식 (편의점/룸서비스 또는 배달앱으로 가벼운 야식 즐기기)</p>
                         </div>
                         <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-red-500 focus:ring-red-400 border-gray-300">
                     </div>
@@ -160,484 +176,525 @@
             <!-- DAY 2 CONTENT (8/1 토) -->
             <div id="content-2" class="tab-content space-y-4 hidden">
                 <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-3 rounded-xl border border-indigo-100 text-xs text-indigo-800 flex justify-between items-center">
-                    <span>📍 <strong>2일차: 전통 의상/메이크업 체험 및 노천 온천 힐링</strong></span>
-                    <span class="bg-indigo-200 px-2 py-0.5 rounded-full text-[10px] font-bold">나라다 온천 ♨️</span>
+                    <span>🟣 <strong>Day 2: 올드타운, 맥주박물관, 용가훠궈 & 구적족도</strong></span>
+                    <span class="bg-indigo-200 px-2 py-0.5 rounded-full text-[10px] font-bold">11시 시작 🏙️</span>
                 </div>
 
-                <!-- Timeline Item 1 -->
-                <div class="relative pl-8 pb-5 border-l-2 border-dashed border-indigo-200 last:border-0 last:pb-0">
-                    <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-indigo-500 border-4 border-white flex items-center justify-center"></div>
-                    <div class="flex items-start justify-between">
-                        <div>
-                            <span class="text-[11px] font-bold text-gray-400">09:30 ~ 10:30</span>
-                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">호텔 체크아웃 및 나라다 리조트 이동</h3>
-                            <p class="text-xs text-gray-500 mt-1">아투어 호텔 조식 후 체크아웃, 택시 탑승하여 즉묵(지모)에 위치한 나라다 리조트로 이동</p>
-                        </div>
-                        <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-indigo-500 focus:ring-indigo-400 border-gray-300">
-                    </div>
-                </div>
-
-                <!-- Transport Item -->
-                <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs flex items-center justify-between text-gray-600 ml-4 my-2">
+                <div class="bg-blue-50 border border-blue-100 rounded-xl p-2.5 text-xs flex items-center justify-between text-gray-600 my-2">
                     <div class="flex items-center space-x-2">
-                        <span class="text-blue-600 font-bold"><i class="fa-solid fa-taxi"></i> 택시 약 45분</span>
+                        <span class="text-blue-600 font-bold"><i class="fa-solid fa-taxi"></i> 택시 약 50분</span>
                         <span class="text-gray-300">|</span>
-                        <span class="font-medium">아투어 공항 ➡️ 나라다 리조트</span>
+                        <span class="font-medium">공항 숙소 ➡️ 크리스탈 오렌지 완샹청점</span>
                     </div>
-                    <span class="text-gray-400 text-[11px]">고속도로 약 45km</span>
+                    <span class="text-blue-700 font-bold text-[11px]">약 120元 (25,670원)</span>
                 </div>
 
-                <!-- Timeline Item 2 -->
                 <div class="relative pl-8 pb-5 border-l-2 border-dashed border-indigo-200 last:border-0 last:pb-0">
                     <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-indigo-500 border-4 border-white flex items-center justify-center"></div>
                     <div class="flex items-start justify-between">
                         <div>
-                            <span class="text-[11px] font-bold text-gray-400">11:00 ~ 13:00</span>
-                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">짐 보관 및 리조트 근처 현지식 점심</h3>
-                            <p class="text-xs text-gray-500 mt-1">리조트 로비에 짐 보관 후, 지모(즉묵) 스타일의 대표 보양식인 양다리 구이나 해산물 요리로 점심 식사</p>
-                        </div>
-                        <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-indigo-500 focus:ring-indigo-400 border-gray-300">
-                    </div>
-                </div>
-
-                <!-- Timeline Item 3 -->
-                <div class="relative pl-8 pb-5 border-l-2 border-dashed border-indigo-200 last:border-0 last:pb-0">
-                    <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-indigo-500 border-4 border-white flex items-center justify-center"></div>
-                    <div class="flex items-start justify-between">
-                        <div>
-                            <span class="text-[11px] font-bold text-gray-400">13:30 ~ 16:00</span>
-                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">나라다 한푸 전통의상 & 메이크업 체험 👘</h3>
-                            <span class="inline-block bg-amber-100 text-amber-800 text-[10px] px-2 py-0.5 rounded font-bold mt-1">⭐ 투숙객 특별 혜택</span>
-                            <div class="text-xs text-gray-600 mt-1.5 space-y-1 bg-amber-50/50 p-2.5 rounded-lg border border-amber-100">
-                                <p>🎁 <strong>의상 대여 혜택:</strong> 리조트 투숙객 대상 중국 전통 한푸(Hanfu) 무료 대여 2시간 제공!</p>
-                                <p>💄 <strong>메이크업 & 헤어:</strong> 리조트 내부 뷰티샵에서 전문가가 제공하는 고전적인 중국풍 메이크업 및 올림머리 헤어핀 스타일링 유료 추가 가능 (사전 문의 시 한화 약 1.5~2만 원 상당으로 퀄리티 우수).</p>
-                                <p>📸 <strong>촬영 포인트:</strong> 정통 고전풍으로 꾸며진 리조트 내부 연못, 붉은색 아치 석교, 중국식 정자 정원 전체가 훌륭한 스튜디오가 됩니다.</p>
+                            <span class="text-[11px] font-bold text-gray-400">11:00 ~ 12:00</span>
+                            <div class="flex items-center space-x-2 mt-0.5">
+                                <h3 class="font-bold text-gray-800 text-sm">크리스탈 오렌지 호텔 이동 및 짐 보관</h3>
+                                <a href="https://uri.amap.com/search?keyword=青岛五四广场万象城桔子水晶酒店" target="_blank" class="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold hover:bg-blue-200">🗺️ 지도</a>
                             </div>
+                            <p class="text-xs text-gray-500 mt-1">완샹청 바로 옆 시내 숙소 도착 후 캐리어 맡기기</p>
                         </div>
                         <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-indigo-500 focus:ring-indigo-400 border-gray-300">
                     </div>
                 </div>
 
-                <!-- Transport Item -->
-                <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs flex items-center justify-between text-gray-600 ml-4 my-2">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-blue-600 font-bold"><i class="fa-solid fa-taxi"></i> 택시 약 25분</span>
-                        <span class="text-gray-300">|</span>
-                        <span class="font-medium">나라다 리조트 ➡️ 즉묵고성</span>
-                    </div>
-                    <span class="text-gray-400 text-[11px]">근처 가볼만한 곳</span>
-                </div>
-
-                <!-- Timeline Item 4 -->
                 <div class="relative pl-8 pb-5 border-l-2 border-dashed border-indigo-200 last:border-0 last:pb-0">
                     <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-indigo-500 border-4 border-white flex items-center justify-center"></div>
                     <div class="flex items-start justify-between">
                         <div>
-                            <span class="text-[11px] font-bold text-gray-400">16:30 ~ 19:30</span>
-                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">즉묵고성 (即墨古城) 고풍스러운 산책</h3>
-                            <p class="text-xs text-gray-500 mt-1">리조트 근처 최대 명소인 천년 전통의 고성. 우뚝 솟은 성루와 성곽길, 화려한 석조 기념비들이 늘어선 골목길을 한푸를 입고 걸으며 인생샷 남기기! 성 안의 야시장 거리에서 꼬치구이 등 로컬 식사 해결</p>
+                            <span class="text-[11px] font-bold text-gray-400">12:00 ~ 13:30</span>
+                            <div class="flex items-center flex-wrap gap-x-2 gap-y-1 mt-0.5">
+                                <h3 class="font-bold text-gray-800 text-sm">점심: 선가어수교 또는 라오팡즈 군만두</h3>
+                                <a href="https://uri.amap.com/search?keyword=船歌鱼水饺万象城店" target="_blank" class="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold hover:bg-blue-200">🗺️ 선가어수교</a>
+                                <a href="https://uri.amap.com/search?keyword=老房子锅贴" target="_blank" class="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold hover:bg-blue-200">🗺️ 라오팡즈</a>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">삼치물만두 또는 바삭한 전통 군만두 (1인 약 50~80元 / 10,700~17,100원)</p>
                         </div>
                         <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-indigo-500 focus:ring-indigo-400 border-gray-300">
                     </div>
                 </div>
 
-                <!-- Transport Item -->
-                <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs flex items-center justify-between text-gray-600 ml-4 my-2">
+                <div class="bg-blue-50 border border-blue-100 rounded-xl p-2.5 text-xs flex items-center justify-between text-gray-600 my-2">
                     <div class="flex items-center space-x-2">
-                        <span class="text-blue-600 font-bold"><i class="fa-solid fa-taxi"></i> 택시 약 25분</span>
+                        <span class="text-blue-600 font-bold"><i class="fa-solid fa-taxi"></i> 택시 약 15분</span>
                         <span class="text-gray-300">|</span>
-                        <span class="font-medium">즉묵고성 ➡️ 나라다 리조트</span>
+                        <span class="font-medium">식당 ➡️ 소어산 공원</span>
                     </div>
-                    <span class="text-gray-400 text-[11px]">복귀 동선</span>
+                    <span class="text-gray-400 text-[11px]">약 15元 (3,200원)</span>
                 </div>
 
-                <!-- Timeline Item 5 -->
                 <div class="relative pl-8 pb-5 border-l-2 border-dashed border-indigo-200 last:border-0 last:pb-0">
                     <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-indigo-500 border-4 border-white flex items-center justify-center"></div>
                     <div class="flex items-start justify-between">
                         <div>
-                            <span class="text-[11px] font-bold text-gray-400">19:30 ~ 22:30</span>
-                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">나라다 리조트 노천 온천 (君澜温泉)</h3>
-                            <span class="inline-block bg-emerald-100 text-emerald-800 text-[9px] px-2 py-0.5 rounded font-bold mt-1">온천 무제한 ♨️</span>
-                            <p class="text-xs text-gray-500 mt-1">투숙객은 야외 대형 온천 테마탕 무료 이용 가능! 우유탕, 인삼탕, 와인탕 등 다양한 힐링 노천 온천욕을 즐기며 하루의 피로를 사르르 녹이기</p>
+                            <span class="text-[11px] font-bold text-gray-400">13:30 ~ 15:30</span>
+                            <div class="flex items-center space-x-2 mt-0.5">
+                                <h3 class="font-bold text-gray-800 text-sm">소어산 공원 전망대 & 뷰 카페</h3>
+                                <a href="https://uri.amap.com/search?keyword=小鱼山公园" target="_blank" class="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold hover:bg-blue-200">🗺️ 지도</a>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">붉은 지붕과 바다 감상 후 코알라원(Koala One) 또는 HiLive 카페 뷰 타임 (음료 약 35~45元 / 7,500~9,600원)</p>
                         </div>
                         <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-indigo-500 focus:ring-indigo-400 border-gray-300">
                     </div>
+                </div>
+
+                <div class="bg-blue-50 border border-blue-100 rounded-xl p-2.5 text-xs flex items-center justify-between text-gray-600 my-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-blue-600 font-bold"><i class="fa-solid fa-taxi"></i> 택시 약 15분</span>
+                        <span class="text-gray-300">|</span>
+                        <span class="font-medium">소어산 ➡️ 칭다오 맥주박물관</span>
+                    </div>
+                    <span class="text-gray-400 text-[11px]">마감전 이동</span>
+                </div>
+
+                <div class="relative pl-8 pb-5 border-l-2 border-dashed border-indigo-200 last:border-0 last:pb-0">
+                    <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-indigo-500 border-4 border-white flex items-center justify-center"></div>
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <span class="text-[11px] font-bold text-gray-400">15:30 ~ 17:30</span>
+                            <div class="flex items-center space-x-2 mt-0.5">
+                                <h3 class="font-bold text-gray-800 text-sm">🍺 칭다오 맥주박물관 (17:30 종료)</h3>
+                                <a href="https://uri.amap.com/search?keyword=青岛啤酒博物馆" target="_blank" class="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold hover:bg-blue-200">🗺️ 지도</a>
+                            </div>
+                            <span class="inline-block bg-amber-100 text-amber-800 text-[9px] px-1.5 py-0.5 rounded font-bold mt-1">입장마감 16:30 전 입장!</span>
+                            <p class="text-xs text-gray-500 mt-1">1공장 신선한 원액 맥주 시음 및 견학 (입장료 약 60~80元 / 12,800~17,100원)</p>
+                        </div>
+                        <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-indigo-500 focus:ring-indigo-400 border-gray-300">
+                    </div>
+                </div>
+
+                <div class="bg-blue-50 border border-blue-100 rounded-xl p-2.5 text-xs flex items-center justify-between text-gray-600 my-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-blue-600 font-bold"><i class="fa-solid fa-taxi"></i> 택시 약 12분</span>
+                        <span class="text-gray-300">|</span>
+                        <span class="font-medium">맥주박물관 ➡️ 성 미카엘 대성당(올드타운)</span>
+                    </div>
+                    <span class="text-blue-700 font-bold text-[11px]">약 15元 (3,200원)</span>
+                </div>
+
+                <div class="relative pl-8 pb-5 border-l-2 border-dashed border-indigo-200 last:border-0 last:pb-0">
+                    <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-indigo-500 border-4 border-white flex items-center justify-center"></div>
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <span class="text-[11px] font-bold text-gray-400">17:30 ~ 19:00</span>
+                            <div class="flex items-center flex-wrap gap-x-2 gap-y-1 mt-0.5">
+                                <h3 class="font-bold text-gray-800 text-sm">올드타운 감성 코스 산책 📸</h3>
+                                <a href="https://uri.amap.com/search?keyword=浙江路天主教堂" target="_blank" class="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold hover:bg-blue-200">🗺️ 성미카엘성당</a>
+                                <a href="https://uri.amap.com/search?keyword=栈桥" target="_blank" class="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold hover:bg-blue-200">🗺️ 잔교</a>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">성 미카엘 대성당 ➡️ 은어항 ➡️ 잔교 & 소청도 공원 (패왕차희 or 차백도 음료 약 15~20元 / 3,200~4,300원)</p>
+                        </div>
+                        <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-indigo-500 focus:ring-indigo-400 border-gray-300">
+                    </div>
+                </div>
+
+                <div class="bg-blue-50 border border-blue-100 rounded-xl p-2.5 text-xs flex items-center justify-between text-gray-600 my-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-blue-600 font-bold"><i class="fa-solid fa-taxi"></i> 택시 약 15분</span>
+                        <span class="text-gray-300">|</span>
+                        <span class="font-medium">잔교/소청도 공원 ➡️ 용가 훠궈(龍歌)</span>
+                    </div>
+                    <span class="text-blue-700 font-bold text-[11px]">약 20元 (4,300원)</span>
+                </div>
+
+                <div class="relative pl-8 pb-5 border-l-2 border-dashed border-indigo-200 last:border-0 last:pb-0">
+                    <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-indigo-500 border-4 border-white flex items-center justify-center"></div>
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <span class="text-[11px] font-bold text-gray-400">19:00 ~ 20:30</span>
+                            <div class="flex items-center space-x-2 mt-0.5">
+                                <h3 class="font-bold text-gray-800 text-sm">[필수 1] 용가 훠궈(龍歌) 저녁 식사 🍲</h3>
+                                <a href="https://uri.amap.com/search?keyword=龙歌自助小火锅" target="_blank" class="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold hover:bg-blue-200">🗺️ 지도</a>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">1인 회전 레일 무한리필 훠궈 (1인 59.9~69元 / 약 12,800~14,800원)</p>
+                        </div>
+                        <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-indigo-500 focus:ring-indigo-400 border-gray-300">
+                    </div>
+                </div>
+
+                <div class="bg-green-50 border border-green-100 rounded-xl p-2.5 text-xs flex items-center justify-between text-gray-600 my-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-green-600 font-bold"><i class="fa-solid fa-person-walking"></i> 도보 약 7분</span>
+                        <span class="text-gray-300">|</span>
+                        <span class="font-medium">용가 훠궈 ➡️ 타이동 야시장</span>
+                    </div>
+                    <span class="text-gray-400 text-[11px]">인접 구역</span>
+                </div>
+
+                <div class="relative pl-8 pb-5 border-l-2 border-dashed border-indigo-200 last:border-0 last:pb-0">
+                    <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-indigo-500 border-4 border-white flex items-center justify-center"></div>
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <span class="text-[11px] font-bold text-gray-400">20:30 ~ 22:00</span>
+                            <div class="flex items-center space-x-2 mt-0.5">
+                                <h3 class="font-bold text-gray-800 text-sm">타이동 야시장 & 양꼬치 픽업/야식 🍢</h3>
+                                <a href="https://uri.amap.com/search?keyword=台东夜市" target="_blank" class="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold hover:bg-blue-200">🗺️ 지도</a>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">타이동 야시장 둘러보기(과일모찌) 및 대홍문 꼬치집 양꼬치 픽업</p>
+                        </div>
+                        <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-indigo-500 focus:ring-indigo-400 border-gray-300">
+                    </div>
+                </div>
+
+                <div class="bg-green-50 border border-green-100 rounded-xl p-2.5 text-xs flex items-center justify-between text-gray-600 my-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-green-600 font-bold"><i class="fa-solid fa-person-walking"></i> 도보 약 10분</span>
+                        <span class="text-gray-300">|</span>
+                        <span class="font-medium">타이동 야시장 ➡️ 구적족도(九适足道)</span>
+                    </div>
+                    <span class="text-gray-400 text-[11px]">인접 구역</span>
+                </div>
+
+                <div class="relative pl-8 pb-5 border-l-2 border-dashed border-indigo-200 last:border-0 last:pb-0">
+                    <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-indigo-500 border-4 border-white flex items-center justify-center"></div>
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <span class="text-[11px] font-bold text-gray-400">22:00 ~ 23:30</span>
+                            <div class="flex items-center space-x-2 mt-0.5">
+                                <h3 class="font-bold text-gray-800 text-sm">[마사지 1] 구적족도(九适/九迹足道) 🦶</h3>
+                                <a href="https://uri.amap.com/search?keyword=九适足道" target="_blank" class="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold hover:bg-blue-200">🗺️ 지도</a>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">시내 체인점 발 & 어깨 마사지로 피로 해소 (1인 약 80~130元 / 17,100~27,800원)</p>
+                        </div>
+                        <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-indigo-500 focus:ring-indigo-400 border-gray-300">
+                    </div>
+                </div>
+
+                <div class="bg-blue-50 border border-blue-100 rounded-xl p-2.5 text-xs flex items-center justify-between text-gray-600 ml-4 my-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-blue-600 font-bold"><i class="fa-solid fa-taxi"></i> 택시 약 15분</span>
+                        <span class="text-gray-300">|</span>
+                        <span class="font-medium">구적족도 ➡️ 크리스탈 오렌지 호텔</span>
+                    </div>
+                    <span class="text-gray-400 text-[11px]">숙소 복귀</span>
                 </div>
             </div>
 
             <!-- DAY 3 CONTENT (8/2 일) -->
             <div id="content-3" class="tab-content space-y-4 hidden">
                 <div class="bg-gradient-to-r from-emerald-50 to-teal-50 p-3 rounded-xl border border-teal-100 text-xs text-teal-800 flex justify-between items-center">
-                    <span>📍 <strong>3일차: 올드타운 역사·문화 투어 (시내 서부 영역)</strong></span>
-                    <span class="bg-teal-200 px-2 py-0.5 rounded-full text-[10px] font-bold">인생샷 코스 📸</span>
+                    <span>🔵 <strong>Day 3: 농어 요리, 라오산 실크로드, 헤드스파 & 5.4 광장</strong></span>
+                    <span class="bg-teal-200 px-2 py-0.5 rounded-full text-[10px] font-bold">11시 시작 🎆</span>
                 </div>
 
-                <!-- Timeline Item 1 -->
+                <div class="bg-blue-50 border border-blue-100 rounded-xl p-2.5 text-xs flex items-center justify-between text-gray-600 my-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-blue-600 font-bold"><i class="fa-solid fa-taxi"></i> 택시 약 10분</span>
+                        <span class="text-gray-300">|</span>
+                        <span class="font-medium">크리스탈 오렌지 호텔 ➡️ 제3 해수욕장</span>
+                    </div>
+                    <span class="text-blue-700 font-bold text-[11px]">약 15元 (3,200원)</span>
+                </div>
+
                 <div class="relative pl-8 pb-5 border-l-2 border-dashed border-teal-200 last:border-0 last:pb-0">
                     <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-teal-500 border-4 border-white flex items-center justify-center"></div>
                     <div class="flex items-start justify-between">
                         <div>
-                            <span class="text-[11px] font-bold text-gray-400">09:00 ~ 10:15</span>
-                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">시내 이동 및 짐 보관</h3>
-                            <p class="text-xs text-gray-500 mt-1">나라다 리조트 체크아웃 후 시내 숙소(푸신/오렌지)로 이동하여 로비에 캐리어 보관</p>
+                            <span class="text-[11px] font-bold text-gray-400">11:00 ~ 11:30</span>
+                            <div class="flex items-center space-x-2 mt-0.5">
+                                <h3 class="font-bold text-gray-800 text-sm">제3 해수욕장 산책 & 헤이티(喜茶)</h3>
+                                <a href="https://uri.amap.com/search?keyword=第三海水浴场" target="_blank" class="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold hover:bg-blue-200">🗺️ 지도</a>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">시원한 바닷바람 맞으며 차 한잔의 여유</p>
                         </div>
                         <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-teal-500 focus:ring-teal-400 border-gray-300">
                     </div>
                 </div>
 
-                <!-- Transport Item -->
-                <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs flex items-center justify-between text-gray-600 ml-4 my-2">
+                <div class="bg-blue-50 border border-blue-100 rounded-xl p-2.5 text-xs flex items-center justify-between text-gray-600 my-2">
                     <div class="flex items-center space-x-2">
-                        <span class="text-blue-600 font-bold"><i class="fa-solid fa-taxi"></i> 택시 약 1시간</span>
+                        <span class="text-blue-600 font-bold"><i class="fa-solid fa-taxi"></i> 택시 약 10분</span>
                         <span class="text-gray-300">|</span>
-                        <span class="font-medium">리조트 ➡️ 시내 숙소</span>
+                        <span class="font-medium">제3 해수욕장 ➡️ 라이즈해산물(来之顺)</span>
                     </div>
-                    <span class="text-gray-400 text-[11px]">약 45km</span>
+                    <span class="text-blue-700 font-bold text-[11px]">약 15元 (3,200원)</span>
                 </div>
 
-                <!-- Timeline Item 2 -->
                 <div class="relative pl-8 pb-5 border-l-2 border-dashed border-teal-200 last:border-0 last:pb-0">
                     <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-teal-500 border-4 border-white flex items-center justify-center"></div>
                     <div class="flex items-start justify-between">
                         <div>
-                            <span class="text-[11px] font-bold text-gray-400">11:00 ~ 12:30</span>
-                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">소어산 공원 & 대학로</h3>
-                            <p class="text-xs text-gray-500 mt-1">전망대에서 붉은 지붕 바다 조망 ➡️ 도보 하산하며 대학로 빨간벽 포토존/카페거리 산책</p>
+                            <span class="text-[11px] font-bold text-gray-400">11:30 ~ 13:00</span>
+                            <div class="flex items-center space-x-2 mt-0.5">
+                                <h3 class="font-bold text-gray-800 text-sm">[필수 2] 라이즈해산물(来之顺) 점심 🐟</h3>
+                                <a href="https://uri.amap.com/search?keyword=来之顺海鲜" target="_blank" class="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold hover:bg-blue-200">🗺️ 지도</a>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">농어 생선 요리(농어찜/카오위) & 신선 해산물 (1인 약 100~130元 / 21,400~27,800원)</p>
                         </div>
                         <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-teal-500 focus:ring-teal-400 border-gray-300">
                     </div>
                 </div>
 
-                <!-- Transport Item -->
-                <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-3 text-xs flex items-center justify-between text-gray-600 ml-4 my-2">
+                <div class="bg-blue-50 border border-blue-100 rounded-xl p-2.5 text-xs flex items-center justify-between text-gray-600 my-2">
                     <div class="flex items-center space-x-2">
-                        <span class="text-emerald-600 font-bold"><i class="fa-solid fa-person-walking"></i> 도보 약 10px</span>
+                        <span class="text-blue-600 font-bold"><i class="fa-solid fa-taxi"></i> 택시 약 40분</span>
                         <span class="text-gray-300">|</span>
-                        <span class="font-medium">소어산 하산 ➡️ 대학로 입구</span>
+                        <span class="font-medium">시내 ➡️ 라오산 실크로드 문화체험원</span>
                     </div>
-                    <span class="text-emerald-600 text-[10px] bg-emerald-100 px-1.5 py-0.5 rounded font-bold">도보 권장 🚶‍♂️</span>
+                    <span class="text-blue-700 font-bold text-[11px]">약 80元 (17,100원)</span>
                 </div>
 
-                <!-- Timeline Item 3 -->
                 <div class="relative pl-8 pb-5 border-l-2 border-dashed border-teal-200 last:border-0 last:pb-0">
                     <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-teal-500 border-4 border-white flex items-center justify-center"></div>
                     <div class="flex items-start justify-between">
                         <div>
-                            <span class="text-[11px] font-bold text-gray-400">12:30 ~ 13:30</span>
-                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">대학로 로컬 맛집 점심</h3>
-                            <p class="text-xs text-gray-500 mt-1">골목길 아기자기한 상점가 구경 후 맛있는 로컬 중식으로 맛있는 식사</p>
+                            <span class="text-[11px] font-bold text-gray-400">14:00 ~ 15:30</span>
+                            <div class="flex items-center space-x-2 mt-0.5">
+                                <h3 class="font-bold text-gray-800 text-sm">실크로드 테마파크 단지 구경</h3>
+                                <a href="https://uri.amap.com/search?keyword=崂山丝路演艺" target="_blank" class="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold hover:bg-blue-200">🗺️ 지도</a>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">공연 전 야외 문화 단지 둘러보기 (입장료 약 80~100元 / 17,100~21,400원)</p>
                         </div>
                         <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-teal-500 focus:ring-teal-400 border-gray-300">
                     </div>
                 </div>
 
-                <!-- Transport Item -->
-                <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-3 text-xs flex items-center justify-between text-gray-600 ml-4 my-2">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-emerald-600 font-bold"><i class="fa-solid fa-person-walking"></i> 도보 약 15분</span>
-                        <span class="text-gray-300">|</span>
-                        <span class="font-medium">대학로 ➡️ 영빈관 ➡️ 천주교 성당</span>
-                    </div>
-                    <span class="text-gray-400 text-[11px]">역사 정취 도보길</span>
-                </div>
-
-                <!-- Timeline Item 4 -->
                 <div class="relative pl-8 pb-5 border-l-2 border-dashed border-teal-200 last:border-0 last:pb-0">
                     <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-teal-500 border-4 border-white flex items-center justify-center"></div>
                     <div class="flex items-start justify-between">
                         <div>
-                            <span class="text-[11px] font-bold text-gray-400">13:30 ~ 16:30</span>
-                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">올드타운 핵심 도보 코스</h3>
-                            <p class="text-xs text-gray-600 font-medium mt-1">영빈관 (독일 총독관저) 관람 ➡️ 천주교 성당 광장 ➡️ 은어항 골목(도보 10분) ➡️ 잔교 바닷길 산책(도보 10분)</p>
-                            <p class="text-[11px] text-red-500 mt-1">💡 꿀팁: 천주교 성당에서 은어항, 잔교까지 모두 평탄한 도보 내리막길 위주라 걷기 아주 좋습니다!</p>
+                            <span class="text-[11px] font-bold text-gray-400">15:30 ~ 17:00</span>
+                            <div class="flex items-center space-x-2 mt-0.5">
+                                <h3 class="font-bold text-gray-800 text-sm">🎭 라오산 실크로드 대형 공연 관람</h3>
+                                <a href="https://uri.amap.com/search?keyword=崂山丝路演艺" target="_blank" class="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold hover:bg-blue-200">🗺️ 지도</a>
+                            </div>
+                            <span class="inline-block bg-purple-100 text-purple-800 text-[9px] px-1.5 py-0.5 rounded font-bold mt-1">15:30 정시 시작</span>
+                            <p class="text-xs text-gray-500 mt-1">화려한 연출의 스펙터클 실크로드 라이브 공연</p>
                         </div>
                         <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-teal-500 focus:ring-teal-400 border-gray-300">
                     </div>
                 </div>
 
-                <!-- Transport Item -->
-                <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs flex items-center justify-between text-gray-600 ml-4 my-2">
+                <div class="bg-blue-50 border border-blue-100 rounded-xl p-2.5 text-xs flex items-center justify-between text-gray-600 my-2">
                     <div class="flex items-center space-x-2">
-                        <span class="text-blue-600 font-bold"><i class="fa-solid fa-taxi"></i> 택시 약 15분</span>
+                        <span class="text-blue-600 font-bold"><i class="fa-solid fa-taxi"></i> 택시 약 45분</span>
                         <span class="text-gray-300">|</span>
-                        <span class="font-medium">잔교 ➡️ 맥주박물관</span>
+                        <span class="font-medium">라오산 ➡️ 시내 복귀</span>
                     </div>
-                    <span class="text-gray-400 text-[11px]">약 4.5km</span>
+                    <span class="text-gray-400 text-[11px]">약 80元 (17,100원)</span>
                 </div>
 
-                <!-- Timeline Item 5 -->
                 <div class="relative pl-8 pb-5 border-l-2 border-dashed border-teal-200 last:border-0 last:pb-0">
                     <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-teal-500 border-4 border-white flex items-center justify-center"></div>
                     <div class="flex items-start justify-between">
                         <div>
-                            <span class="text-[11px] font-bold text-gray-400">17:00 ~ 18:30</span>
-                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">칭다오 맥주박물관 🍻</h3>
-                            <p class="text-xs text-gray-500 mt-1">맥주의 역사를 공부하고 공장에서 갓 짜낸 신선한 원액 맥주 꿀맛 시음!</p>
+                            <span class="text-[11px] font-bold text-gray-400">18:00 ~ 19:30</span>
+                            <div class="flex items-center space-x-2 mt-0.5">
+                                <h3 class="font-bold text-gray-800 text-sm">[스파] 정통 헤드스파 (头疗) 💇‍♀️</h3>
+                                <a href="https://uri.amap.com/search?keyword=头疗" target="_blank" class="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold hover:bg-blue-200">🗺️ 지도</a>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">두피 스파 & 샴푸 마사지 60분 (1인 약 100~150元 / 21,400~32,100원)</p>
                         </div>
                         <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-teal-500 focus:ring-teal-400 border-gray-300">
                     </div>
                 </div>
 
-                <!-- Transport Item -->
-                <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-3 text-xs flex items-center justify-between text-gray-600 ml-4 my-2">
+                <div class="bg-green-50 border border-green-100 rounded-xl p-2.5 text-xs flex items-center justify-between text-gray-600 my-2">
                     <div class="flex items-center space-x-2">
-                        <span class="text-emerald-600 font-bold"><i class="fa-solid fa-person-walking"></i> 도보 약 12분</span>
+                        <span class="text-green-600 font-bold"><i class="fa-solid fa-person-walking"></i> 도보 약 10분</span>
                         <span class="text-gray-300">|</span>
-                        <span class="font-medium">맥주박물관 ➡️ 타이동 야시장</span>
+                        <span class="font-medium">헤드스파 ➡️ 대홍문/무예슬거</span>
                     </div>
-                    <span class="text-gray-400 text-[11px]">가까운 쇼핑 거리</span>
+                    <span class="text-gray-400 text-[11px]">인접 구역</span>
                 </div>
 
-                <!-- Timeline Item 6 -->
                 <div class="relative pl-8 pb-5 border-l-2 border-dashed border-teal-200 last:border-0 last:pb-0">
                     <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-teal-500 border-4 border-white flex items-center justify-center"></div>
                     <div class="flex items-start justify-between">
                         <div>
-                            <span class="text-[11px] font-bold text-gray-400">18:30 ~ 20:00</span>
-                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">타이동 야시장 먹방 투어</h3>
-                            <p class="text-xs text-gray-500 mt-1">칭다오 최고의 핫플레이스 야시장에서 양꼬치와 다양한 구이 먹거리로 저녁 해결</p>
+                            <span class="text-[11px] font-bold text-gray-400">19:30 ~ 20:30</span>
+                            <div class="flex items-center space-x-2 mt-0.5">
+                                <h3 class="font-bold text-gray-800 text-sm">저녁: 대홍문 꼬치집 or 무예슬거 양꼬치 🍻</h3>
+                                <a href="https://uri.amap.com/search?keyword=无野烧烤" target="_blank" class="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold hover:bg-blue-200">🗺️ 지도</a>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">직원이 구워주는 양꼬치/사이드 or 노포 감성 대홍문 (1인 약 80~110元 / 17,100~23,500원)</p>
                         </div>
                         <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-teal-500 focus:ring-teal-400 border-gray-300">
                     </div>
                 </div>
 
-                <!-- Transport Item -->
-                <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs flex items-center justify-between text-gray-600 ml-4 my-2">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-blue-600 font-bold"><i class="fa-solid fa-taxi"></i> 택시 약 15분</span>
-                        <span class="text-gray-300">|</span>
-                        <span class="font-medium">타이동 ➡️ 오사광장</span>
-                    </div>
-                    <span class="text-gray-400 text-[11px]">약 5.2km</span>
-                </div>
-
-                <!-- Timeline Item 7 -->
                 <div class="relative pl-8 pb-5 border-l-2 border-dashed border-teal-200 last:border-0 last:pb-0">
                     <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-teal-500 border-4 border-white flex items-center justify-center"></div>
                     <div class="flex items-start justify-between">
                         <div>
                             <span class="text-[11px] font-bold text-gray-400">20:30 ~ 21:30</span>
-                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">오사광장 야경 & 빌딩 레이저쇼</h3>
-                            <p class="text-xs text-gray-500 mt-1">칭다오의 랜드마크인 '오월의 바람' 붉은 조각상과 미래지향적 빌딩숲 조명 관람</p>
+                            <div class="flex items-center space-x-2 mt-0.5">
+                                <h3 class="font-bold text-gray-800 text-sm">🎆 5.4 광장(五四广场) 빌딩 레이저쇼</h3>
+                                <a href="https://uri.amap.com/search?keyword=五四广场" target="_blank" class="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold hover:bg-blue-200">🗺️ 지도</a>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">20:00~21:00 피크 타임에 조명쇼 감상 후 숙소(크리스탈 오렌지) 도보 복귀</p>
                         </div>
                         <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-teal-500 focus:ring-teal-400 border-gray-300">
                     </div>
+                </div>
+
+                <div class="bg-green-50 border border-green-100 rounded-xl p-2.5 text-xs flex items-center justify-between text-gray-600 ml-4 my-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-green-600 font-bold"><i class="fa-solid fa-person-walking"></i> 도보 약 5분</span>
+                        <span class="text-gray-300">|</span>
+                        <span class="font-medium">5.4 광장 ➡️ 크리스탈 오렌지 호텔</span>
+                    </div>
+                    <span class="text-gray-400 text-[11px]">숙소 복귀 (완샹청 바로 옆)</span>
                 </div>
             </div>
 
             <!-- DAY 4 CONTENT (8/3 월) -->
             <div id="content-4" class="tab-content space-y-4 hidden">
                 <div class="bg-gradient-to-r from-emerald-50 to-teal-50 p-3 rounded-xl border border-teal-100 text-xs text-teal-800 flex justify-between items-center">
-                    <span>📍 <strong>4일차: 라오산 바다와 금사탄 세계 맥주축제 올인</strong></span>
-                    <span class="bg-teal-200 px-2 py-0.5 rounded-full text-[10px] font-bold">빅이벤트 🍺</span>
+                    <span>🟢 <strong>Day 4: 완샹청, 황다오 임프레션 & 맥주축제</strong></span>
+                    <span class="bg-teal-200 px-2 py-0.5 rounded-full text-[10px] font-bold">11시 시작 🎪</span>
                 </div>
 
-                <!-- Timeline Item 1 -->
                 <div class="relative pl-8 pb-5 border-l-2 border-dashed border-teal-200 last:border-0 last:pb-0">
                     <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-teal-500 border-4 border-white flex items-center justify-center"></div>
                     <div class="flex items-start justify-between">
                         <div>
-                            <span class="text-[11px] font-bold text-gray-400">09:00 ~ 11:30</span>
-                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">믹스몰 (완샹청) 쇼핑 & 캐리어 보관</h3>
-                            <p class="text-[11px] text-red-500 font-bold mb-1">🚨 신의 한수: 체크아웃한 짐은 믹스몰 보관소에 보관!</p>
-                            <p class="text-xs text-gray-500">KKV 매장 등에서 카피바라 캐릭터 굿즈 쇼핑 및 기념품 탐방</p>
+                            <span class="text-[11px] font-bold text-gray-400">11:00 ~ 11:15</span>
+                            <div class="flex items-center space-x-2 mt-0.5">
+                                <h3 class="font-bold text-gray-800 text-sm">크리스탈 오렌지 체크아웃 ➡️ 완샹청 도보 이동</h3>
+                                <a href="https://uri.amap.com/search?keyword=青岛万象城" target="_blank" class="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold hover:bg-blue-200">🗺️ 지도</a>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">숙소 바로 앞 쇼핑몰로 두 손 가볍게 이동</p>
                         </div>
                         <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-teal-500 focus:ring-teal-400 border-gray-300">
                     </div>
                 </div>
 
-                <!-- Timeline Item 2 -->
                 <div class="relative pl-8 pb-5 border-l-2 border-dashed border-teal-200 last:border-0 last:pb-0">
                     <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-teal-500 border-4 border-white flex items-center justify-center"></div>
                     <div class="flex items-start justify-between">
                         <div>
-                            <span class="text-[11px] font-bold text-gray-400">11:30 ~ 12:30</span>
-                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">완샹청 맛집에서 점심</h3>
-                            <p class="text-xs text-gray-500 mt-1">'선가어물만'에서 소문난 삼치 물만두나 깔끔한 정통 산동 요리 세트 시식</p>
+                            <span class="text-[11px] font-bold text-gray-400">11:15 ~ 12:45</span>
+                            <div class="flex items-center space-x-2 mt-0.5">
+                                <h3 class="font-bold text-gray-800 text-sm">완샹청 점심 식사 (와이포지아 등)</h3>
+                                <a href="https://uri.amap.com/search?keyword=青岛万象城" target="_blank" class="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold hover:bg-blue-200">🗺️ 지도</a>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">와이포지아, 루위 2013, 딘타이펑 등 선호 매장에서 식사 (1인 약 50~70元 / 10,700~15,000원)</p>
                         </div>
                         <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-teal-500 focus:ring-teal-400 border-gray-300">
                     </div>
                 </div>
 
-                <!-- Transport Item -->
-                <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs flex items-center justify-between text-gray-600 ml-4 my-2">
+                <div class="bg-blue-50 border border-blue-100 rounded-xl p-2.5 text-xs flex items-center justify-between text-gray-600 my-2">
                     <div class="flex items-center space-x-2">
-                        <span class="text-blue-600 font-bold"><i class="fa-solid fa-taxi"></i> 택시 약 30분</span>
+                        <span class="text-blue-600 font-bold"><i class="fa-solid fa-taxi"></i> 택시 약 35분</span>
                         <span class="text-gray-300">|</span>
-                        <span class="font-medium">믹스몰 ➡️ 라오산 (태청코스)</span>
+                        <span class="font-medium">완샹청 ➡️ 임프레션 호텔(금사탄)</span>
                     </div>
-                    <span class="text-gray-400 text-[11px]">해안도로 질주</span>
+                    <span class="text-blue-700 font-bold text-[11px]">약 70元 (15,000원)</span>
                 </div>
 
-                <!-- Timeline Item 3 -->
                 <div class="relative pl-8 pb-5 border-l-2 border-dashed border-teal-200 last:border-0 last:pb-0">
                     <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-teal-500 border-4 border-white flex items-center justify-center"></div>
                     <div class="flex items-start justify-between">
                         <div>
-                            <span class="text-[11px] font-bold text-gray-400">13:00 ~ 15:30</span>
-                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">라오산(노산) 바다 산책</h3>
-                            <p class="text-xs text-gray-500 mt-1">산과 바다가 어우러진 신선의 산. 체력 절약을 위해 가벼운 해안가 산책코스로 아름다운 절경 관람</p>
+                            <span class="text-[11px] font-bold text-gray-400">13:30 ~ 17:00</span>
+                            <div class="flex items-center space-x-2 mt-0.5">
+                                <h3 class="font-bold text-gray-800 text-sm">임프레션 호텔 체크인 & 해변 물놀이/스파</h3>
+                                <a href="https://uri.amap.com/search?keyword=青印象酒店金沙滩店" target="_blank" class="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold hover:bg-blue-200">🗺️ 지도</a>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">체크인 후 인근 금사탄 해변 산책 및 물놀이/스파 힐링 🏊‍♂️</p>
                         </div>
                         <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-teal-500 focus:ring-teal-400 border-gray-300">
                     </div>
                 </div>
 
-                <!-- Transport Item -->
-                <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs flex items-center justify-between text-gray-600 ml-4 my-2">
+                <div class="relative pl-8 pb-5 border-l-2 border-dashed border-teal-200 last:border-0 last:pb-0">
+                    <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-teal-500 border-4 border-white flex items-center justify-center"></div>
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <span class="text-[11px] font-bold text-gray-400">17:00 ~ 22:00</span>
+                            <div class="flex items-center space-x-2 mt-0.5">
+                                <h3 class="font-bold text-gray-800 text-sm">🎪 금사탄 세계 맥주축제 (도보 이동)</h3>
+                                <a href="https://uri.amap.com/search?keyword=金沙滩啤酒城" target="_blank" class="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold hover:bg-blue-200">🗺️ 지도</a>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">대형 맥주 텐트 부스에서 꼬치구이, 야시장 요리 및 공연 즐기기 🍻</p>
+                        </div>
+                        <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-teal-500 focus:ring-teal-400 border-gray-300">
+                    </div>
+                </div>
+
+                <div class="bg-green-50 border border-green-100 rounded-xl p-2.5 text-xs flex items-center justify-between text-gray-600 ml-4 my-2">
                     <div class="flex items-center space-x-2">
-                        <span class="text-blue-600 font-bold"><i class="fa-solid fa-taxi"></i> 택시 약 1시간</span>
+                        <span class="text-green-600 font-bold"><i class="fa-solid fa-person-walking"></i> 도보 약 10분</span>
                         <span class="text-gray-300">|</span>
-                        <span class="font-medium">라오산 ➡️ 믹스몰(짐찾기) ➡️ 황다오</span>
+                        <span class="font-medium">금사탄 맥주축제 ➡️ 임프레션 호텔</span>
                     </div>
-                    <span class="text-gray-400 text-[11px]">해저터널 경유</span>
-                </div>
-
-                <!-- Timeline Item 4 -->
-                <div class="relative pl-8 pb-5 border-l-2 border-dashed border-teal-200 last:border-0 last:pb-0">
-                    <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-teal-500 border-4 border-white flex items-center justify-center"></div>
-                    <div class="flex items-start justify-between">
-                        <div>
-                            <span class="text-[11px] font-bold text-gray-400">16:30 ~ 17:30</span>
-                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">윈덤 칭다오 호텔 체크인</h3>
-                            <p class="text-xs text-gray-500 mt-1">황다오 윈덤 호텔에 체크인 후, 맥주축제를 편하게 즐길 옷으로 갈아입고 정비하기</p>
-                        </div>
-                        <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-teal-500 focus:ring-teal-400 border-gray-300">
-                    </div>
-                </div>
-
-                <!-- Transport Item -->
-                <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-3 text-xs flex items-center justify-between text-gray-600 ml-4 my-2">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-emerald-600 font-bold"><i class="fa-solid fa-person-walking"></i> 도보 약 10px</span>
-                        <span class="text-gray-300">|</span>
-                        <span class="font-medium">윈덤 호텔 ➡️ 금사탄 맥주성</span>
-                    </div>
-                    <span class="text-emerald-600 text-[10px] bg-emerald-100 px-1.5 py-0.5 rounded font-bold">초인접 🚶‍♂️</span>
-                </div>
-
-                <!-- Timeline Item 5 -->
-                <div class="relative pl-8 pb-5 border-l-2 border-dashed border-teal-200 last:border-0 last:pb-0">
-                    <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-teal-500 border-4 border-white flex items-center justify-center"></div>
-                    <div class="flex items-start justify-between">
-                        <div>
-                            <span class="text-[11px] font-bold text-gray-400">17:30 ~ 22:00</span>
-                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">금사탄 맥주축제 (메인 하이라이트)</h3>
-                            <span class="inline-block bg-emerald-100 text-emerald-800 text-[9px] px-2 py-0.5 rounded font-bold mt-1">축제 만끽 🎪</span>
-                            <p class="text-xs text-gray-500 mt-1">세계 최대 규모의 초대형 맥주 텐트와 화려한 야외 공연 관람. 윈덤 호텔과 도보 거리로 늦게까지 축제를 안심하고 만끽 가능!</p>
-                        </div>
-                        <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-teal-500 focus:ring-teal-400 border-gray-300">
-                    </div>
+                    <span class="text-gray-400 text-[11px]">숙소 복귀 (금사탄 인접)</span>
                 </div>
             </div>
 
             <!-- DAY 5 CONTENT (8/4 화) -->
             <div id="content-5" class="tab-content space-y-4 hidden">
                 <div class="bg-gradient-to-r from-amber-50 to-yellow-50 p-3 rounded-xl border border-yellow-100 text-xs text-yellow-800 flex justify-between items-center">
-                    <span>📍 <strong>5일차: 여유로운 오전과 랜드마크 & 완벽한 귀국 동선</strong></span>
-                    <span class="bg-yellow-200 px-2 py-0.5 rounded-full text-[10px] font-bold">귀국 ✈️</span>
+                    <span>🟡 <strong>Day 5: 완샹청 쇼핑 & 베이징덕 ➡️ 귀국</strong></span>
+                    <span class="bg-yellow-200 px-2 py-0.5 rounded-full text-[10px] font-bold">11시 시작 ✈️</span>
                 </div>
 
-                <!-- Timeline Item 1 -->
-                <div class="relative pl-8 pb-5 border-l-2 border-dashed border-yellow-200 last:border-0 last:pb-0">
-                    <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-yellow-500 border-4 border-white flex items-center justify-center"></div>
-                    <div class="flex items-start justify-between">
-                        <div>
-                            <span class="text-[11px] font-bold text-gray-400">09:30 ~ 11:00</span>
-                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">늦잠, 여유로운 조식 & 체크아웃</h3>
-                            <p class="text-xs text-gray-500 mt-1">윈덤 호텔 베딩 속에서 푹 늦잠 자고 체크아웃 후 시내로 복귀</p>
-                        </div>
-                        <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-yellow-500 focus:ring-yellow-400 border-gray-300">
-                    </div>
-                </div>
-
-                <!-- Transport Item -->
-                <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs flex items-center justify-between text-gray-600 ml-4 my-2">
+                <div class="bg-blue-50 border border-blue-100 rounded-xl p-2.5 text-xs flex items-center justify-between text-gray-600 my-2">
                     <div class="flex items-center space-x-2">
-                        <span class="text-blue-600 font-bold"><i class="fa-solid fa-taxi"></i> 택시 약 30분</span>
+                        <span class="text-blue-600 font-bold"><i class="fa-solid fa-taxi"></i> 택시 약 35분</span>
                         <span class="text-gray-300">|</span>
-                        <span class="font-medium">황다오 ➡️ 오사광장 인근</span>
+                        <span class="font-medium">임프레션 호텔 ➡️ 시내 완샹청</span>
                     </div>
-                    <span class="text-gray-400 text-[11px]">해저터널 이용</span>
+                    <span class="text-blue-700 font-bold text-[11px]">약 70元 (15,000원)</span>
                 </div>
 
-                <!-- Timeline Item 2 -->
                 <div class="relative pl-8 pb-5 border-l-2 border-dashed border-yellow-200 last:border-0 last:pb-0">
                     <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-yellow-500 border-4 border-white flex items-center justify-center"></div>
                     <div class="flex items-start justify-between">
                         <div>
-                            <span class="text-[11px] font-bold text-gray-400">11:30 ~ 12:30</span>
-                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">낮의 오사광장 & 올림픽 요트경기장</h3>
-                            <p class="text-xs text-gray-500 mt-1">밤과는 또 다른 시원하고 푸르른 바다와 요트 선착장의 청량한 풍경 산책</p>
+                            <span class="text-[11px] font-bold text-gray-400">12:00 ~ 13:30</span>
+                            <div class="flex items-center space-x-2 mt-0.5">
+                                <h3 class="font-bold text-gray-800 text-sm">점심: 정통 베이징덕 (북경오리) 🦆</h3>
+                                <a href="https://uri.amap.com/search?keyword=北京烤鸭 万象城" target="_blank" class="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold hover:bg-blue-200">🗺️ 지도</a>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">완샹청 내 오리구이 전문점 또는 용가훠궈 (1인 약 60~150元 / 12,800~32,100원)</p>
                         </div>
                         <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-yellow-500 focus:ring-yellow-400 border-gray-300">
                     </div>
                 </div>
 
-                <!-- Transport Item -->
-                <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-3 text-xs flex items-center justify-between text-gray-600 ml-4 my-2">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-emerald-600 font-bold"><i class="fa-solid fa-person-walking"></i> 도보 약 10분</span>
-                        <span class="text-gray-300">|</span>
-                        <span class="font-medium">요트경기장 ➡️ 베이징덕 식당</span>
-                    </div>
-                    <span class="text-gray-400 text-[11px]">광장 해안길 도보</span>
-                </div>
-
-                <!-- Timeline Item 3 -->
                 <div class="relative pl-8 pb-5 border-l-2 border-dashed border-yellow-200 last:border-0 last:pb-0">
                     <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-yellow-500 border-4 border-white flex items-center justify-center"></div>
                     <div class="flex items-start justify-between">
                         <div>
-                            <span class="text-[11px] font-bold text-gray-400">12:30 ~ 14:00</span>
-                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">최후의 만찬 (베이징덕) 🦆</h3>
-                            <p class="text-xs text-gray-500 mt-1">오사광장 근처 맛집에서 부드럽고 겉바속촉한 정통 오리구이와 정갈한 요리들로 여행 마지막 든든하게 배 채우기</p>
+                            <span class="text-[11px] font-bold text-gray-400">13:30 ~ 16:30</span>
+                            <div class="flex items-center space-x-2 mt-0.5">
+                                <h3 class="font-bold text-gray-800 text-sm">완샹청 쇼핑 & 대형마트 기념품 구매</h3>
+                                <a href="https://uri.amap.com/search?keyword=青岛万象城" target="_blank" class="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold hover:bg-blue-200">🗺️ 지도</a>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">KKV 카피바라 굿즈 탐방 및 마트에서 칭다오 꿀땅콩, 맥주 등 최종 쇼핑</p>
                         </div>
                         <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-yellow-500 focus:ring-yellow-400 border-gray-300">
                     </div>
                 </div>
 
-                <!-- Transport Item -->
-                <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-3 text-xs flex items-center justify-between text-gray-600 ml-4 my-2">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-emerald-600 font-bold"><i class="fa-solid fa-person-walking"></i> 도보 약 5분</span>
-                        <span class="text-gray-300">|</span>
-                        <span class="font-medium">식당 ➡️ 근처 쇼핑가/카페</span>
-                    </div>
-                    <span class="text-gray-400 text-[11px]">골목 인근 이동</span>
-                </div>
-
-                <!-- Timeline Item 4 -->
-                <div class="relative pl-8 pb-5 border-l-2 border-dashed border-yellow-200 last:border-0 last:pb-0">
-                    <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-yellow-500 border-4 border-white flex items-center justify-center"></div>
-                    <div class="flex items-start justify-between">
-                        <div>
-                            <span class="text-[11px] font-bold text-gray-400">14:00 ~ 16:30</span>
-                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">해안 뷰 카페 & 꿀땅콩 마지막 기념품 쇼핑</h3>
-                            <p class="text-xs text-gray-500 mt-1">전망 좋은 해안 카페에서 티타임 휴식 후 대형마트에 들러 청도 꿀땅콩, 맥주 등 최종 지인 선물 쇼핑</p>
-                        </div>
-                        <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-yellow-500 focus:ring-yellow-400 border-gray-300">
-                    </div>
-                </div>
-
-                <!-- Transport Item -->
-                <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs flex items-center justify-between text-gray-600 ml-4 my-2">
+                <div class="bg-blue-50 border border-blue-100 rounded-xl p-2.5 text-xs flex items-center justify-between text-gray-600 my-2">
                     <div class="flex items-center space-x-2">
                         <span class="text-blue-600 font-bold"><i class="fa-solid fa-train"></i> 지하철 8호선 약 1시간</span>
                         <span class="text-gray-300">|</span>
-                        <span class="font-medium">오사광장 인근 ➡️ 교동 공항</span>
+                        <span class="font-medium">완샹청 ➡️ 교동 공항</span>
                     </div>
-                    <span class="text-gray-400 text-[11px]">지하철 적극 권장 (정체 없음)</span>
+                    <span class="text-blue-700 font-bold text-[11px]">7元 (1,500원)</span>
                 </div>
 
-                <!-- Timeline Item 5 -->
                 <div class="relative pl-8 pb-5 border-l-2 border-dashed border-yellow-200 last:border-0 last:pb-0">
                     <div class="absolute -left-[9px] top-1 w-4.5 h-4.5 rounded-full bg-yellow-500 border-4 border-white flex items-center justify-center"></div>
                     <div class="flex items-start justify-between">
                         <div>
                             <span class="text-[11px] font-bold text-gray-400">18:00 ~ 21:10</span>
-                            <h3 class="font-bold text-gray-800 text-sm mt-0.5">공항 안전 도착, 체크인 및 출국</h3>
-                            <p class="text-xs text-gray-500 mt-1">오후 6시경 공항 도착하여 티웨이 TW608 (21:10 출발 ➡️ 인천 23:50 도착) 수속 완료 후 안전하고 무사하게 한국으로 귀국</p>
+                            <div class="flex items-center space-x-2 mt-0.5">
+                                <h3 class="font-bold text-gray-800 text-sm">공항도착, 출국수속 & 비행기 탑승</h3>
+                                <a href="https://uri.amap.com/search?keyword=青岛胶东国际机场" target="_blank" class="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold hover:bg-blue-200">🗺️ 지도</a>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">티웨이 TW608 (21:10 출발 ➡️ 인천 23:50 도착) 무사 귀국</p>
                         </div>
                         <input type="checkbox" onchange="updateProgress()" class="todo-check w-5 h-5 rounded text-yellow-500 focus:ring-yellow-400 border-gray-300">
                     </div>
@@ -648,54 +705,652 @@
 
     </main>
 
-    <!-- Bottom Navigation (Mini Budget & Utilities) -->
-    <nav class="bg-white border-t border-gray-200 fixed bottom-0 left-0 right-0 max-w-md mx-auto p-3 flex justify-around items-center z-50 rounded-t-2xl shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
+    <!-- Bottom Navigation -->
+    <nav class="bg-white border-t border-gray-200 fixed bottom-0 left-0 right-0 max-w-md mx-auto p-2.5 flex justify-around items-center z-50 rounded-t-2xl shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
         <button onclick="switchTab(1)" class="flex flex-col items-center space-y-1 text-gray-400 hover:text-red-500 focus:outline-none transition">
             <i class="fa-solid fa-map-location-dot text-lg"></i>
             <span class="text-[10px] font-bold">일정 보기</span>
         </button>
-        <button onclick="openBudgetModal()" class="flex flex-col items-center space-y-1 text-gray-400 hover:text-amber-500 focus:outline-none transition">
+        <button onclick="openRecommendModal()" class="flex flex-col items-center space-y-1 text-amber-500 hover:text-amber-600 focus:outline-none transition">
+            <i class="fa-solid fa-star text-lg"></i>
+            <span class="text-[10px] font-bold">추천 명소/맛집</span>
+        </button>
+        <button onclick="openBudgetModal()" class="flex flex-col items-center space-y-1 text-gray-400 hover:text-emerald-500 focus:outline-none transition">
             <i class="fa-solid fa-wallet text-lg"></i>
-            <span class="text-[10px] font-bold font-medium">예산 계산</span>
+            <span class="text-[10px] font-bold">예산 계산</span>
         </button>
         <button onclick="openTipModal()" class="flex flex-col items-center space-y-1 text-gray-400 hover:text-orange-500 focus:outline-none transition">
             <i class="fa-solid fa-suitcase-rolling text-lg"></i>
-            <span class="text-[10px] font-bold font-medium">짐 & 교통 꿀팁</span>
+            <span class="text-[10px] font-bold">여행 꿀팁</span>
+        </button>
+        <button onclick="openMeituanModal()" class="flex flex-col items-center space-y-1 text-gray-400 hover:text-yellow-600 focus:outline-none transition">
+            <i class="fa-solid fa-motorcycle text-lg"></i>
+            <span class="text-[10px] font-bold">메이투안</span>
         </button>
     </nav>
 
+    <!-- RECOMMENDATIONS MODAL -->
+    <div id="recommend-modal" class="hidden fixed inset-0 z-[100] bg-black/60 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl relative overflow-y-auto max-h-[85vh] no-scrollbar">
+            <button onclick="closeRecommendModal()" class="absolute right-4 top-4 text-gray-400 hover:text-gray-600">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <div class="flex items-center space-x-2 text-amber-500">
+                <i class="fa-solid fa-list-check text-xl"></i>
+                <h3 class="font-bold text-lg text-gray-900">추천 맛집 & 관광지 리스트</h3>
+            </div>
+            
+            <!-- Section 1: Core Places List -->
+            <div class="space-y-2 text-xs">
+                <h4 class="font-bold text-gray-800 text-xs border-b pb-1"><i class="fa-solid fa-location-dot text-amber-500"></i> 핵심 장소 리스트 (고덕지도)</h4>
+                <div class="space-y-1.5 text-[11px]">
+                    <div class="bg-gray-50 p-2 rounded-lg border border-gray-100 flex justify-between items-center">
+                        <div>
+                            <div class="flex items-center space-x-1.5">
+                                <p class="font-bold text-gray-800">구적족도 (九适/九迹足道)</p>
+                                <a href="https://uri.amap.com/search?keyword=九适足道" target="_blank" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.2 rounded font-bold">🗺️ 지도</a>
+                            </div>
+                            <p class="text-gray-500 text-[10px]">시내 체인점 마사지 (발/전신)</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="font-bold text-amber-600">17,100~27,800원</span>
+                            <p class="text-[9px] text-gray-400">(80~130元)</p>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 p-2 rounded-lg border border-gray-100 flex justify-between items-center">
+                        <div>
+                            <div class="flex items-center space-x-1.5">
+                                <p class="font-bold text-gray-800">정통 헤드스파 (头疗)</p>
+                                <a href="https://uri.amap.com/search?keyword=头疗" target="_blank" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.2 rounded font-bold">🗺️ 지도</a>
+                            </div>
+                            <p class="text-gray-500 text-[10px]">시내 뷰티숍 (60분 두피 케어)</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="font-bold text-amber-600">21,400~32,100원</span>
+                            <p class="text-[9px] text-gray-400">(100~150元)</p>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 p-2 rounded-lg border border-gray-100 flex justify-between items-center">
+                        <div>
+                            <div class="flex items-center space-x-1.5">
+                                <p class="font-bold text-gray-800">용가 훠궈 (龍歌)</p>
+                                <a href="https://uri.amap.com/search?keyword=龙歌自助小火锅" target="_blank" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.2 rounded font-bold">🗺️ 지도</a>
+                            </div>
+                            <p class="text-gray-500 text-[10px]">타이동 완다 / 시내 회전 무한리필</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="font-bold text-amber-600">12,800~14,800원</span>
+                            <p class="text-[9px] text-gray-400">(59.9~69元)</p>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 p-2 rounded-lg border border-gray-100 flex justify-between items-center">
+                        <div>
+                            <div class="flex items-center space-x-1.5">
+                                <p class="font-bold text-gray-800">라이즈해산물 (来之顺)</p>
+                                <a href="https://uri.amap.com/search?keyword=来之顺海鲜" target="_blank" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.2 rounded font-bold">🗺️ 지도</a>
+                            </div>
+                            <p class="text-gray-500 text-[10px]">5.4 광장 인근 농어 요리 전문</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="font-bold text-amber-600">21,400~27,800원</span>
+                            <p class="text-[9px] text-gray-400">(100~130元)</p>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 p-2 rounded-lg border border-gray-100 flex justify-between items-center">
+                        <div>
+                            <div class="flex items-center space-x-1.5">
+                                <p class="font-bold text-gray-800">대홍문 꼬치집 (大红门)</p>
+                                <a href="https://uri.amap.com/search?keyword=大红门烤肉" target="_blank" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.2 rounded font-bold">🗺️ 지도</a>
+                            </div>
+                            <p class="text-gray-500 text-[10px]">식빵·감자칩·부추구이 등 별미 곁들임 (2시 브레이크타임)</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="font-bold text-amber-600">17,100~23,500원</span>
+                            <p class="text-[9px] text-gray-400">(80~110元)</p>
+                        </div>
+                    </div>
+                    <!-- 무예슬거 -->
+                    <div class="bg-amber-50/60 p-2 rounded-lg border border-amber-200 flex justify-between items-center">
+                        <div>
+                            <div class="flex items-center space-x-1.5">
+                                <p class="font-bold text-gray-800">무예슬거 (无野烧烤/无野烤肉)</p>
+                                <a href="https://uri.amap.com/search?keyword=无野烧烤" target="_blank" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.2 rounded font-bold">🗺️ 지도</a>
+                            </div>
+                            <p class="text-gray-600 text-[10px]">직원이 직접 구워주는 꼬치 맛집 | 현지인 방문 多 (QR주문)</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="font-bold text-amber-600">17,100~23,500원</span>
+                            <p class="text-[9px] text-gray-400">(80~110元)</p>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 p-2 rounded-lg border border-gray-100 flex justify-between items-center">
+                        <div>
+                            <div class="flex items-center space-x-1.5">
+                                <p class="font-bold text-gray-800">라오산 실크로드</p>
+                                <a href="https://uri.amap.com/search?keyword=崂山丝路演艺" target="_blank" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.2 rounded font-bold">🗺️ 지도</a>
+                            </div>
+                            <p class="text-gray-500 text-[10px]">15:30 대형 라이브 공연</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="font-bold text-amber-600">17,100~21,400원</span>
+                            <p class="text-[9px] text-gray-400">(80~100元)</p>
+                        </div>
+                    </div>
+                    <!-- 올드타운 코스: 성 미카엘 대성당 -->
+                    <div class="bg-gray-50 p-2 rounded-lg border border-gray-100 flex justify-between items-center">
+                        <div>
+                            <div class="flex items-center space-x-1.5">
+                                <p class="font-bold text-gray-800">성 미카엘 대성당 (浙江路天主教堂)</p>
+                                <a href="https://uri.amap.com/search?keyword=浙江路天主教堂" target="_blank" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.2 rounded font-bold">🗺️ 지도</a>
+                            </div>
+                            <p class="text-gray-500 text-[10px]">고딕 양식의 붉은 첨탑 성당, 올드타운 랜드마크</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="font-bold text-amber-600">무료</span>
+                            <p class="text-[9px] text-gray-400">(외관 관람)</p>
+                        </div>
+                    </div>
+                    <!-- 올드타운 코스: 은어항 -->
+                    <div class="bg-gray-50 p-2 rounded-lg border border-gray-100 flex justify-between items-center">
+                        <div>
+                            <div class="flex items-center space-x-1.5">
+                                <p class="font-bold text-gray-800">은어항 (银鱼巷)</p>
+                                <a href="https://uri.amap.com/search?keyword=银鱼巷" target="_blank" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.2 rounded font-bold">🗺️ 지도</a>
+                            </div>
+                            <p class="text-gray-500 text-[10px]">칭다오 MZ 핫플 골목, 포토존 & 카페거리</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="font-bold text-amber-600">무료</span>
+                            <p class="text-[9px] text-gray-400">(입장 무료)</p>
+                        </div>
+                    </div>
+                    <!-- 올드타운 코스: 잔교 & 소청도 공원 -->
+                    <div class="bg-gray-50 p-2 rounded-lg border border-gray-100 flex justify-between items-center">
+                        <div>
+                            <div class="flex items-center space-x-1.5">
+                                <p class="font-bold text-gray-800">잔교 & 소청도 공원 (栈桥/小青岛公园)</p>
+                                <a href="https://uri.amap.com/search?keyword=栈桥" target="_blank" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.2 rounded font-bold">🗺️ 잔교</a>
+                                <a href="https://uri.amap.com/search?keyword=小青岛公园" target="_blank" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.2 rounded font-bold">🗺️ 소청도</a>
+                            </div>
+                            <p class="text-gray-500 text-[10px]">칭다오 대표 랜드마크, 회란각 & 해안선 뷰</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="font-bold text-amber-600">무료</span>
+                            <p class="text-[9px] text-gray-400">(소청도공원 입장료 별도)</p>
+                        </div>
+                    </div>
+                    <!-- 올드타운 코스: 패왕차희 -->
+                    <div class="bg-gray-50 p-2 rounded-lg border border-gray-100 flex justify-between items-center">
+                        <div>
+                            <div class="flex items-center space-x-1.5">
+                                <p class="font-bold text-gray-800">패왕차희 (霸王茶姬)</p>
+                                <a href="https://uri.amap.com/search?keyword=霸王茶姬" target="_blank" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.2 rounded font-bold">🗺️ 지도</a>
+                            </div>
+                            <p class="text-gray-500 text-[10px]">올드타운 산책 중 들르기 좋은 티 브랜드</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="font-bold text-amber-600">3,200~4,300원</span>
+                            <p class="text-[9px] text-gray-400">(15~20元)</p>
+                        </div>
+                    </div>
+                    <!-- 올드타운 코스: 차백도 -->
+                    <div class="bg-gray-50 p-2 rounded-lg border border-gray-100 flex justify-between items-center">
+                        <div>
+                            <div class="flex items-center space-x-1.5">
+                                <p class="font-bold text-gray-800">차백도 (茶百道)</p>
+                                <a href="https://uri.amap.com/search?keyword=茶百道" target="_blank" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.2 rounded font-bold">🗺️ 지도</a>
+                            </div>
+                            <p class="text-gray-500 text-[10px]">패왕차희와 함께 비교해볼 만한 티 브랜드</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="font-bold text-amber-600">3,200~4,300원</span>
+                            <p class="text-[9px] text-gray-400">(15~20元)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 1b: Community-submitted spots (신규 제보) -->
+            <div class="space-y-2 text-xs pt-2">
+                <h4 class="font-bold text-gray-800 text-xs border-b pb-1"><i class="fa-solid fa-map-pin text-amber-500"></i> 추가 제보 맛집 & 스팟 (고덕지도)</h4>
+                <div class="space-y-1.5 text-[11px]">
+                    <div class="flex justify-between items-start">
+                        <p>• <strong>삼림해산물집 (森林海鲜大排档·原马哥森林啤酒屋 丹阳路店):</strong> 게딱지도삭면+게살비빔밥+마라롱샤 필수주문</p>
+                        <a href="https://uri.amap.com/search?keyword=森林海鲜大排档丹阳路店" target="_blank" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.2 rounded font-bold shrink-0 ml-1">🗺️ 지도</a>
+                    </div>
+                    <div class="flex justify-between items-start">
+                        <p>• <strong>운상해천 카페&바 (云上海天·云璟餐吧&酒吧):</strong> 82층 위치, 뷰가 죽이는 곳 (디저트 추천)</p>
+                        <a href="https://uri.amap.com/search?keyword=云上海天云璟餐吧" target="_blank" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.2 rounded font-bold shrink-0 ml-1">🗺️ 지도</a>
+                    </div>
+                    <div class="flex justify-between items-start">
+                        <p>• <strong>모멘토 카페&바 (莫问·Momento):</strong> 소어산 근처 유럽마을 감성, 오션뷰 (실내외 모두 좋음)</p>
+                        <a href="https://uri.amap.com/search?keyword=莫问Momento" target="_blank" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.2 rounded font-bold shrink-0 ml-1">🗺️ 지도</a>
+                    </div>
+                    <div class="flex justify-between items-start">
+                        <p>• <strong>블란버니 (布兰兔的植物庄园 大鲍岛店):</strong> 미카엘성당 근처 찻집, 기념품 추천</p>
+                        <a href="https://uri.amap.com/search?keyword=布兰兔的植物庄园大鲍岛店" target="_blank" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.2 rounded font-bold shrink-0 ml-1">🗺️ 지도</a>
+                    </div>
+                    <div class="flex justify-between items-start">
+                        <p>• <strong>타이동 야시장 (台东夜市/台东步行街):</strong> 구워먹는 냉면·지앤빙·유행하는 모찌 꼭 먹기</p>
+                        <a href="https://uri.amap.com/search?keyword=台东夜市" target="_blank" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.2 rounded font-bold shrink-0 ml-1">🗺️ 지도</a>
+                    </div>
+                    <div class="flex justify-between items-start">
+                        <p>• <strong>威尔德咖啡 THE WEIRD CAFE (燕儿岛路店):</strong> 칭다오 힙스터들이 모이는 카페, 커피&시그니처칵테일 다양</p>
+                        <a href="https://uri.amap.com/search?keyword=威尔德咖啡燕儿岛路店" target="_blank" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.2 rounded font-bold shrink-0 ml-1">🗺️ 지도</a>
+                    </div>
+                    <div class="flex justify-between items-start">
+                        <p>• <strong>燕琴酒楼 (海鲜·青岛菜):</strong> 영상에 소개된 해산물·칭다오 가정식 맛집</p>
+                        <a href="https://uri.amap.com/search?keyword=燕琴酒楼" target="_blank" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.2 rounded font-bold shrink-0 ml-1">🗺️ 지도</a>
+                    </div>
+                    <div class="flex justify-between items-start">
+                        <p>• <strong>맥주박물관 (青岛啤酒博物馆):</strong> 100년 역사 시음 & 견학 (일정 Day2 포함)</p>
+                        <a href="https://uri.amap.com/search?keyword=青岛啤酒博物馆" target="_blank" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.2 rounded font-bold shrink-0 ml-1">🗺️ 지도</a>
+                    </div>
+                    <div class="flex justify-between items-start">
+                        <p>• <strong>찌모루시장 (即墨路小商品市场):</strong> 현지 재래시장, 소품/잡화 쇼핑</p>
+                        <a href="https://uri.amap.com/search?keyword=即墨路小商品市场" target="_blank" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.2 rounded font-bold shrink-0 ml-1">🗺️ 지도</a>
+                    </div>
+                    <div class="flex justify-between items-start">
+                        <p>• <strong>칭다오역 (青岛站):</strong> 구시가지 랜드마크 기차역</p>
+                        <a href="https://uri.amap.com/search?keyword=青岛站" target="_blank" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.2 rounded font-bold shrink-0 ml-1">🗺️ 지도</a>
+                    </div>
+                    <div class="flex justify-between items-start">
+                        <p>• <strong>소어산 (小鱼山):</strong> 전망대 & 뷰카페, 붉은지붕 야경 명소 (일정 Day2 포함)</p>
+                        <a href="https://uri.amap.com/search?keyword=小鱼山公园" target="_blank" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.2 rounded font-bold shrink-0 ml-1">🗺️ 지도</a>
+                    </div>
+                    <div class="flex justify-between items-start">
+                        <p>• <strong>중산공원 (青岛中山公园):</strong> 벚꽃/단풍 명소 시민공원</p>
+                        <a href="https://uri.amap.com/search?keyword=青岛中山公园" target="_blank" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.2 rounded font-bold shrink-0 ml-1">🗺️ 지도</a>
+                    </div>
+                    <div class="flex justify-between items-start">
+                        <p>• <strong>하이보 조시장 (海泊河早市):</strong> 현지인 새벽시장, 아침 먹거리</p>
+                        <a href="https://uri.amap.com/search?keyword=海泊河早市" target="_blank" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.2 rounded font-bold shrink-0 ml-1">🗺️ 지도</a>
+                    </div>
+                    <div class="flex justify-between items-start">
+                        <p>• <strong>5.4 광장 (五四广场):</strong> 빌딩 레이저쇼 명소, 신시가지 랜드마크 (일정 Day3 포함)</p>
+                        <a href="https://uri.amap.com/search?keyword=五四广场" target="_blank" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.2 rounded font-bold shrink-0 ml-1">🗺️ 지도</a>
+                    </div>
+                    <div class="flex justify-between items-start">
+                        <p>• <strong>불야성 (青岛明月·山海间):</strong> 칭다오 대표 야경 명소</p>
+                        <a href="https://uri.amap.com/search?keyword=青岛明月山海间" target="_blank" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.2 rounded font-bold shrink-0 ml-1">🗺️ 지도</a>
+                    </div>
+                    <div class="flex justify-between items-start">
+                        <p>• <strong>완샹청/믹스몰 (青岛万象城):</strong> 칭다오 최대 쇼핑몰 (일정 Day2·4·5 포함)</p>
+                        <a href="https://uri.amap.com/search?keyword=青岛万象城" target="_blank" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.2 rounded font-bold shrink-0 ml-1">🗺️ 지도</a>
+                    </div>
+                    <div class="flex justify-between items-start">
+                        <p>• <strong>메이다얼 (美达尔烧烤海鲜家常菜 中山路店):</strong> 중산로 꼬치·해산물 가정식 맛집</p>
+                        <a href="https://uri.amap.com/search?keyword=美达尔烧烤海鲜家常菜中山路店" target="_blank" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.2 rounded font-bold shrink-0 ml-1">🗺️ 지도</a>
+                    </div>
+                    <div class="flex justify-between items-start">
+                        <p>• <strong>춘허루 (春和楼 劈柴院1902街区店):</strong> 피차이위엔 내 100년 전통 로컬 맛집</p>
+                        <a href="https://uri.amap.com/search?keyword=春和楼劈柴院1902街区店" target="_blank" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.2 rounded font-bold shrink-0 ml-1">🗺️ 지도</a>
+                    </div>
+                    <div class="flex justify-between items-start">
+                        <p>• <strong>카피파크 (卡皮公园 Capy Park):</strong> 카피바라 테마파크</p>
+                        <a href="https://uri.amap.com/search?keyword=卡皮公园" target="_blank" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.2 rounded font-bold shrink-0 ml-1">🗺️ 지도</a>
+                    </div>
+                    <div class="flex justify-between items-start">
+                        <p>• <strong>包鲜生 (小笼包·馄饨, 잔교 근처):</strong> 딤섬/샤오롱바오/훈툰 맛집</p>
+                        <a href="https://uri.amap.com/search?keyword=包鲜生" target="_blank" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.2 rounded font-bold shrink-0 ml-1">🗺️ 지도</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 2: Hotpot Comparison -->
+            <div class="space-y-2 text-xs pt-2">
+                <h4 class="font-bold text-gray-800 text-xs border-b pb-1"><i class="fa-solid fa-fire text-red-500"></i> 훠궈 브랜드 비교표</h4>
+                <div class="space-y-1.5 text-[11px]">
+                    <div class="bg-red-50/50 p-2 rounded-lg border border-red-100">
+                        <div class="flex justify-between items-center font-bold text-gray-800">
+                            <div class="flex items-center space-x-1.5">
+                                <span>용가 훠궈 (龍歌)</span>
+                                <a href="https://uri.amap.com/search?keyword=龙歌自助小火锅" target="_blank" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.2 rounded font-bold">🗺️ 지도</a>
+                            </div>
+                            <span class="text-red-600">약 1.1~1.3만원 (59.9~69元)</span>
+                        </div>
+                        <p class="text-[10px] text-gray-600 mt-0.5">1인 회전 레일 무한리필 | 가성비 극상, 취향대로 만끽 가능</p>
+                    </div>
+                    <div class="bg-red-50/50 p-2 rounded-lg border border-red-100">
+                        <div class="flex justify-between items-center font-bold text-gray-800">
+                            <div class="flex items-center space-x-1.5">
+                                <span>통더라이 (통덕래)</span>
+                                <a href="https://uri.amap.com/search?keyword=通德莱火锅" target="_blank" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.2 rounded font-bold">🗺️ 지도</a>
+                            </div>
+                            <span class="text-red-600">약 1.3~1.7만원 (70~90元)</span>
+                        </div>
+                        <p class="text-[10px] text-gray-600 mt-0.5">정통 대중적 훠궈 단품 | 현지인 인기 최고의 가성비 훠궈</p>
+                    </div>
+                    <div class="bg-red-50/50 p-2 rounded-lg border border-red-100">
+                        <div class="flex justify-between items-center font-bold text-gray-800">
+                            <div class="flex items-center space-x-1.5">
+                                <span>하이디라오 (海底捞)</span>
+                                <a href="https://uri.amap.com/search?keyword=海底捞火锅" target="_blank" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.2 rounded font-bold">🗺️ 지도</a>
+                            </div>
+                            <span class="text-red-600">약 2.3~2.8만원 (120~150元)</span>
+                        </div>
+                        <p class="text-[10px] text-gray-600 mt-0.5">최고급 서비스 훠궈 | 수중기 쇼, 변검 공연 및 명품 서비스</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 3: MixC Food Recommendation -->
+            <div class="space-y-2 text-xs pt-2">
+                <h4 class="font-bold text-gray-800 text-xs border-b pb-1"><i class="fa-solid fa-store text-blue-500"></i> 완샹청(믹스몰) 점심 추천 맛집</h4>
+                <div class="space-y-1.5 text-[11px]">
+                    <div class="flex justify-between items-start">
+                        <p>• <strong>와이포지아 (外婆家):</strong> 한국인 입맛에 딱 맞는 중국 가정식 (1인 약 50~70元)</p>
+                        <a href="https://uri.amap.com/search?keyword=外婆家青岛万象城店" target="_blank" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.2 rounded font-bold shrink-0 ml-1">🗺️ 지도</a>
+                    </div>
+                    <div class="flex justify-between items-start">
+                        <p>• <strong>루위 2013 (炉鱼):</strong> 대형 생선구이(카오위) 전문 맛집</p>
+                        <a href="https://uri.amap.com/search?keyword=炉鱼青岛万象城店" target="_blank" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.2 rounded font-bold shrink-0 ml-1">🗺️ 지도</a>
+                    </div>
+                    <div class="flex justify-between items-start">
+                        <p>• <strong>딘타이펑 (鼎泰丰):</strong> 실패 없는 샤오롱바오 & 딤섬 매장</p>
+                        <a href="https://uri.amap.com/search?keyword=鼎泰丰青岛万象城店" target="_blank" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.2 rounded font-bold shrink-0 ml-1">🗺️ 지도</a>
+                    </div>
+                    <div class="flex justify-between items-start">
+                        <p>• <strong>무쇠솥 찜요리 (好灶头铁锅炖):</strong> 铁锅炖(안동찜닭 느낌), 돼지등뼈/닭고기+豆角·干豆角 추가, 하얀꽃빵·옥수수빵 추천</p>
+                        <a href="https://uri.amap.com/search?keyword=好灶头铁锅炖万象城店" target="_blank" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.2 rounded font-bold shrink-0 ml-1">🗺️ 지도</a>
+                    </div>
+                    <div class="flex justify-between items-start">
+                        <p>• <strong>명가딤섬 만두집 (铭家点心):</strong> 샤오롱바오·홍미창펀·두리안백조만두·볶음면 추천</p>
+                        <a href="https://uri.amap.com/search?keyword=铭家点心青岛万象城店" target="_blank" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.2 rounded font-bold shrink-0 ml-1">🗺️ 지도</a>
+                    </div>
+                    <div class="flex justify-between items-start">
+                        <p>• <strong>에그타르트 맛집 (鲍师傅糕点):</strong> 완샹청 내 에그타르트/디저트 전문점</p>
+                        <a href="https://uri.amap.com/search?keyword=鲍师傅糕点青岛万象城店" target="_blank" class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.2 rounded font-bold shrink-0 ml-1">🗺️ 지도</a>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="closeRecommendModal()" class="w-full bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold py-2.5 rounded-xl transition shadow-md">확인했습니다</button>
+        </div>
+    </div>
+
     <!-- TIP MODAL -->
     <div id="tip-modal" class="hidden fixed inset-0 z-[100] bg-black/60 flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-2xl relative animate-in fade-in zoom-in duration-200">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl relative animate-in fade-in zoom-in duration-200">
             <button onclick="closeTipModal()" class="absolute right-4 top-4 text-gray-400 hover:text-gray-600">
                 <i class="fa-solid fa-xmark text-lg"></i>
             </button>
             <div class="flex items-center space-x-2 text-amber-500">
                 <i class="fa-solid fa-lightbulb text-xl"></i>
-                <h3 class="font-bold text-lg text-gray-900">현지 이동 & 짐 보관 핵심 비법</h3>
+                <h3 class="font-bold text-lg text-gray-900">현지 이동 & 여행 꿀팁</h3>
             </div>
             
             <div class="space-y-3 text-xs text-gray-600 overflow-y-auto max-h-80 pr-1">
                 <div class="bg-amber-50 p-3 rounded-xl border border-amber-100">
-                    <p class="font-bold text-amber-900 mb-1">💼 4일차 짐 보관 '신의 한 수'</p>
-                    <p>시내에서 황다오 숙소(윈덤)로 갈 때, 온종일 무거운 캐리어를 끌고 라오산을 오르는 실수를 범하기 쉽습니다. 아침에 체크아웃 후 <strong>믹스몰(완샹청) 물품 보관소</strong>에 짐을 맡기면 두 손이 가볍게 관광할 수 있습니다!</p>
+                    <p class="font-bold text-amber-900 mb-1">🌆 숙소 오렌지 5.4 광장 장점</p>
+                    <p>2~3일차 투숙하는 크리스탈 오렌지 완샹청점은 5.4 광장 및 완샹청 바로 옆이라 3일차 밤 <strong>레이저 조명쇼 관람 후 도보 복귀</strong>가 매우 편리합니다.</p>
                 </div>
                 <div class="bg-blue-50 p-3 rounded-xl border border-blue-100">
-                    <p class="font-bold text-blue-900 mb-1">👘 2일차 한푸 & 온천 팁</p>
-                    <p>나라다 리조트에서 한푸를 입고 <strong>즉묵고성</strong>으로 이동해 고전 감성의 사진 촬영을 한 후, 리조트로 돌아와 밤에 노천탕 스파를 하는 동선은 하루를 최고로 대접받는 힐링 기분으로 채워줍니다.</p>
+                    <p class="font-bold text-blue-900 mb-1">🍺 맥주박물관 운영시간 주의</p>
+                    <p>맥주박물관은 17:30에 마감하므로 <strong>입장 마감 시간인 16:30 전</strong>에 여유 있게 도착하셔야 1공장 신선한 원액 맥주 시음을 하실 수 있습니다.</p>
                 </div>
                 <div class="bg-green-50 p-3 rounded-xl border border-green-100">
-                    <p class="font-bold text-green-900 mb-1">🚕 황다오 축제 이동 & 귀국</p>
-                    <p>금사탄 맥주축제 장소(금사탄 맥주성)와 아주 가까운 윈덤 호텔에 묵기에 밤늦게까지 부담 없이 축제를 즐기고 걸어서 복귀하면 됩니다. 5일차 귀국길에는 차가 밀릴 수 있으므로 정시성이 높은 <strong>지하철 8호선</strong>을 타고 공항으로 가시는 것을 권장합니다.</p>
+                    <p class="font-bold text-green-900 mb-1">🚇 귀국길 지하철 8호선 강추</p>
+                    <p>5일차 완샹청에서 공항 이동 시 택시는 도로 정체가 발생할 수 있으므로, 정시성이 확실한 <strong>지하철 8호선(약 1시간/7元)</strong>을 추천합니다.</p>
                 </div>
             </div>
-            <button onclick="closeTipModal()" class="w-full bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold py-3 rounded-xl transition shadow-md">확인했습니다</button>
+            <button onclick="closeTipModal()" class="w-full bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold py-2.5 rounded-xl transition shadow-md">확인했습니다</button>
         </div>
     </div>
 
-    <!-- BUDGET MODAL -->
+    <!-- ROUTE MAP MODAL -->
+    <div id="route-map-modal" class="hidden fixed inset-0 z-[100] bg-black/60 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-4 space-y-3 shadow-2xl relative">
+            <button onclick="closeRouteMapModal()" class="absolute right-4 top-4 text-gray-400 hover:text-gray-600 z-[10]">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <div class="flex items-center space-x-2 text-red-500">
+                <i class="fa-solid fa-route text-xl"></i>
+                <h3 id="route-map-title" class="font-bold text-lg text-gray-900">Day 1 동선 지도</h3>
+            </div>
+            <div id="route-map" class="w-full h-80 rounded-xl overflow-hidden border border-gray-200 bg-gray-100"></div>
+            <div id="route-map-legend" class="text-[10px] text-gray-600 space-y-0.5 max-h-24 overflow-y-auto no-scrollbar"></div>
+            <p class="text-[9px] text-gray-400 leading-snug">※ 좌표는 참고용 근사치입니다. 실제 이동 시에는 각 일정의 🗺️ 고덕지도 링크로 정확한 위치를 확인해주세요.</p>
+        </div>
+    </div>
+
+    <!-- MEITUAN MODAL -->
+    <div id="meituan-modal" class="hidden fixed inset-0 z-[100] bg-black/60 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-5 space-y-3 shadow-2xl relative overflow-y-auto max-h-[85vh] no-scrollbar">
+            <button onclick="closeMeituanModal()" class="absolute right-4 top-4 text-gray-400 hover:text-gray-600">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <div class="flex items-center space-x-2 text-yellow-600">
+                <i class="fa-solid fa-motorcycle text-xl"></i>
+                <h3 class="font-bold text-lg text-gray-900">메이투안 맛집/디저트 검색어</h3>
+            </div>
+            <p class="text-[11px] text-gray-400">검색어(중국어)를 눌러서 복사한 뒤, 메이투안 앱에 바로 붙여넣으세요.</p>
+
+            <div class="space-y-3 text-xs">
+                <!-- 식사/맛집 -->
+                <div class="space-y-1.5">
+                    <h4 class="font-bold text-gray-800 text-xs border-b pb-1">🍽️ 식사 / 맛집</h4>
+                    <div class="space-y-1.5">
+                        <div class="bg-gray-50 rounded-lg p-2 flex items-center justify-between gap-2 border border-gray-100">
+                            <div class="min-w-0">
+                                <p class="font-bold text-gray-800 text-[11px]">루위</p>
+                                <p class="text-gray-500 text-[10px]">매콤하고 부드러운 생선찜으로 한국인 입맛에 딱 맞춘 곳</p>
+                            </div>
+                            <button onclick="copyMeituanText('炉鱼', this)" class="shrink-0 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 text-[10px] font-bold px-2 py-1.5 rounded flex items-center gap-1 font-mono"><i class="fa-solid fa-copy"></i>炉鱼</button>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-2 flex items-center justify-between gap-2 border border-gray-100">
+                            <div class="min-w-0">
+                                <p class="font-bold text-gray-800 text-[11px]">와이포지아</p>
+                                <p class="text-gray-500 text-[10px]">가성비 최고의 중국식 가정식을 맛볼 수 있는 필수 코스</p>
+                            </div>
+                            <button onclick="copyMeituanText('外婆家', this)" class="shrink-0 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 text-[10px] font-bold px-2 py-1.5 rounded flex items-center gap-1 font-mono"><i class="fa-solid fa-copy"></i>外婆家</button>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-2 flex items-center justify-between gap-2 border border-gray-100">
+                            <div class="min-w-0">
+                                <p class="font-bold text-gray-800 text-[11px]">명가딤섬</p>
+                                <p class="text-gray-500 text-[10px]">육즙 가득하고 깔끔한 맛을 자랑하는 딤섬 전문점</p>
+                            </div>
+                            <button onclick="copyMeituanText('铭家点心', this)" class="shrink-0 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 text-[10px] font-bold px-2 py-1.5 rounded flex items-center gap-1 font-mono"><i class="fa-solid fa-copy"></i>铭家点心</button>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-2 flex items-center justify-between gap-2 border border-gray-100">
+                            <div class="min-w-0">
+                                <p class="font-bold text-gray-800 text-[11px]">희가훠궈</p>
+                                <p class="text-gray-500 text-[10px]">혼자 가도 부담 없는 1인 무한리필 훠궈 매장</p>
+                            </div>
+                            <button onclick="copyMeituanText('喜家自助小火锅', this)" class="shrink-0 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 text-[10px] font-bold px-2 py-1.5 rounded flex items-center gap-1 font-mono"><i class="fa-solid fa-copy"></i>喜家自助小火锅</button>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-2 flex items-center justify-between gap-2 border border-gray-100">
+                            <div class="min-w-0">
+                                <p class="font-bold text-gray-800 text-[11px]">선가어수교</p>
+                                <p class="text-gray-500 text-[10px]">오징어, 삼치 등 특별한 소가 들어간 어만두 전문점</p>
+                            </div>
+                            <button onclick="copyMeituanText('船歌鱼水饺', this)" class="shrink-0 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 text-[10px] font-bold px-2 py-1.5 rounded flex items-center gap-1 font-mono"><i class="fa-solid fa-copy"></i>船歌鱼水饺</button>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-2 flex items-center justify-between gap-2 border border-gray-100">
+                            <div class="min-w-0">
+                                <p class="font-bold text-gray-800 text-[11px]">메이다얼</p>
+                                <p class="text-gray-500 text-[10px]">겉바속촉의 정석인 가지튀김과 매콤한 바지락볶음 강력 추천</p>
+                            </div>
+                            <button onclick="copyMeituanText('美达尔', this)" class="shrink-0 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 text-[10px] font-bold px-2 py-1.5 rounded flex items-center gap-1 font-mono"><i class="fa-solid fa-copy"></i>美达尔</button>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-2 flex items-center justify-between gap-2 border border-gray-100">
+                            <div class="min-w-0">
+                                <p class="font-bold text-gray-800 text-[11px]">춘화루</p>
+                                <p class="text-gray-500 text-[10px]">깊은 역사를 자랑하는 곳으로 탕수육과 찐만두가 유명</p>
+                            </div>
+                            <button onclick="copyMeituanText('春和楼', this)" class="shrink-0 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 text-[10px] font-bold px-2 py-1.5 rounded flex items-center gap-1 font-mono"><i class="fa-solid fa-copy"></i>春和楼</button>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-2 flex items-center justify-between gap-2 border border-gray-100">
+                            <div class="min-w-0">
+                                <p class="font-bold text-gray-800 text-[11px]">샹이거</p>
+                                <p class="text-gray-500 text-[10px]">북경오리의 진수를 맛볼 수 있는 베이징덕 전문점</p>
+                            </div>
+                            <button onclick="copyMeituanText('上逸阁', this)" class="shrink-0 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 text-[10px] font-bold px-2 py-1.5 rounded flex items-center gap-1 font-mono"><i class="fa-solid fa-copy"></i>上逸阁</button>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-2 flex items-center justify-between gap-2 border border-gray-100">
+                            <div class="min-w-0">
+                                <p class="font-bold text-gray-800 text-[11px]">체스체스양다리구이</p>
+                                <p class="text-gray-500 text-[10px]">잡내 없이 고소하고 푸짐한 양다리구이 맛집</p>
+                            </div>
+                            <button onclick="copyMeituanText('棋棋格烤羊腿', this)" class="shrink-0 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 text-[10px] font-bold px-2 py-1.5 rounded flex items-center gap-1 font-mono"><i class="fa-solid fa-copy"></i>棋棋格烤羊腿</button>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-2 flex items-center justify-between gap-2 border border-gray-100">
+                            <div class="min-w-0">
+                                <p class="font-bold text-gray-800 text-[11px]">전해연 칭다오요리</p>
+                                <p class="text-gray-500 text-[10px]">감칠맛 나는 마늘새우당면이 대표 메뉴인 로컬 맛집</p>
+                            </div>
+                            <button onclick="copyMeituanText('前海沿', this)" class="shrink-0 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 text-[10px] font-bold px-2 py-1.5 rounded flex items-center gap-1 font-mono"><i class="fa-solid fa-copy"></i>前海沿</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 식사/야식 -->
+                <div class="space-y-1.5">
+                    <h4 class="font-bold text-gray-800 text-xs border-b pb-1">🌙 식사 / 야식</h4>
+                    <div class="space-y-1.5">
+                        <div class="bg-gray-50 rounded-lg p-2 flex items-center justify-between gap-2 border border-gray-100">
+                            <div class="min-w-0">
+                                <p class="font-bold text-gray-800 text-[11px]">양꼬치</p>
+                                <p class="text-gray-500 text-[10px]">칭다오 맥주와 완벽한 조합을 자랑하는 대표 야식 양꼬치</p>
+                            </div>
+                            <button onclick="copyMeituanText('羊肉串', this)" class="shrink-0 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 text-[10px] font-bold px-2 py-1.5 rounded flex items-center gap-1 font-mono"><i class="fa-solid fa-copy"></i>羊肉串</button>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-2 flex items-center justify-between gap-2 border border-gray-100">
+                            <div class="min-w-0">
+                                <p class="font-bold text-gray-800 text-[11px]">마라롱샤</p>
+                                <p class="text-gray-500 text-[10px]">매콤하고 중독성 있는 소스에 버무려진 민물가재 마라롱샤</p>
+                            </div>
+                            <button onclick="copyMeituanText('麻辣龙虾', this)" class="shrink-0 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 text-[10px] font-bold px-2 py-1.5 rounded flex items-center gap-1 font-mono"><i class="fa-solid fa-copy"></i>麻辣龙虾</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 간식/디저트 -->
+                <div class="space-y-1.5">
+                    <h4 class="font-bold text-gray-800 text-xs border-b pb-1">🥟 간식 / 디저트</h4>
+                    <div class="space-y-1.5">
+                        <div class="bg-gray-50 rounded-lg p-2 flex items-center justify-between gap-2 border border-gray-100">
+                            <div class="min-w-0">
+                                <p class="font-bold text-gray-800 text-[11px]">지엔빙</p>
+                                <p class="text-gray-500 text-[10px]">바삭하고 든든하게 즐길 수 있는 중국식 대중 간식 지엔빙</p>
+                            </div>
+                            <button onclick="copyMeituanText('煎饼', this)" class="shrink-0 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 text-[10px] font-bold px-2 py-1.5 rounded flex items-center gap-1 font-mono"><i class="fa-solid fa-copy"></i>煎饼</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 음료/디저트 -->
+                <div class="space-y-1.5">
+                    <h4 class="font-bold text-gray-800 text-xs border-b pb-1">🧋 음료 / 디저트</h4>
+                    <div class="space-y-1.5">
+                        <div class="bg-gray-50 rounded-lg p-2 flex items-center justify-between gap-2 border border-gray-100">
+                            <div class="min-w-0">
+                                <p class="font-bold text-gray-800 text-[11px]">헤이티</p>
+                                <p class="text-gray-500 text-[10px]">진한 크림치즈 폼과 생과일의 조화가 일품인 브랜드</p>
+                            </div>
+                            <button onclick="copyMeituanText('喜茶', this)" class="shrink-0 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 text-[10px] font-bold px-2 py-1.5 rounded flex items-center gap-1 font-mono"><i class="fa-solid fa-copy"></i>喜茶</button>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-2 flex items-center justify-between gap-2 border border-gray-100">
+                            <div class="min-w-0">
+                                <p class="font-bold text-gray-800 text-[11px]">패왕차희</p>
+                                <p class="text-gray-500 text-[10px]">고급스러운 차 향과 밀크티의 조화로 인기 있는 브랜드</p>
+                            </div>
+                            <button onclick="copyMeituanText('霸王茶姬', this)" class="shrink-0 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 text-[10px] font-bold px-2 py-1.5 rounded flex items-center gap-1 font-mono"><i class="fa-solid fa-copy"></i>霸王茶姬</button>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-2 flex items-center justify-between gap-2 border border-gray-100">
+                            <div class="min-w-0">
+                                <p class="font-bold text-gray-800 text-[11px]">러러차</p>
+                                <p class="text-gray-500 text-[10px]">달콤한 과일 티와 베이커리가 모두 훌륭한 디저트 카페</p>
+                            </div>
+                            <button onclick="copyMeituanText('乐乐茶', this)" class="shrink-0 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 text-[10px] font-bold px-2 py-1.5 rounded flex items-center gap-1 font-mono"><i class="fa-solid fa-copy"></i>乐乐茶</button>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-2 flex items-center justify-between gap-2 border border-gray-100">
+                            <div class="min-w-0">
+                                <p class="font-bold text-gray-800 text-[11px]">모어요거트</p>
+                                <p class="text-gray-500 text-[10px]">꾸덕하고 진한 맛으로 사랑받는 요거트 전문점</p>
+                            </div>
+                            <button onclick="copyMeituanText('茉酸奶', this)" class="shrink-0 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 text-[10px] font-bold px-2 py-1.5 rounded flex items-center gap-1 font-mono"><i class="fa-solid fa-copy"></i>茉酸奶</button>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-2 flex items-center justify-between gap-2 border border-gray-100">
+                            <div class="min-w-0">
+                                <p class="font-bold text-gray-800 text-[11px]">미쉐빙청</p>
+                                <p class="text-gray-500 text-[10px]">압도적인 가성비를 자랑하는 아이스크림 및 음료 전문점</p>
+                            </div>
+                            <button onclick="copyMeituanText('蜜雪冰城', this)" class="shrink-0 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 text-[10px] font-bold px-2 py-1.5 rounded flex items-center gap-1 font-mono"><i class="fa-solid fa-copy"></i>蜜雪冰城</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 음료/커피 -->
+                <div class="space-y-1.5">
+                    <h4 class="font-bold text-gray-800 text-xs border-b pb-1">☕ 음료 / 커피</h4>
+                    <div class="space-y-1.5">
+                        <div class="bg-gray-50 rounded-lg p-2 flex items-center justify-between gap-2 border border-gray-100">
+                            <div class="min-w-0">
+                                <p class="font-bold text-gray-800 text-[11px]">루이싱커피</p>
+                                <p class="text-gray-500 text-[10px]">중국 전역에서 쉽게 찾을 수 있는 가성비 최고 브랜드</p>
+                            </div>
+                            <button onclick="copyMeituanText('瑞幸咖啡', this)" class="shrink-0 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 text-[10px] font-bold px-2 py-1.5 rounded flex items-center gap-1 font-mono"><i class="fa-solid fa-copy"></i>瑞幸咖啡</button>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-2 flex items-center justify-between gap-2 border border-gray-100">
+                            <div class="min-w-0">
+                                <p class="font-bold text-gray-800 text-[11px]">스타벅스</p>
+                                <p class="text-gray-500 text-[10px]">익숙한 맛과 편안함이 필요할 때 찾기 좋은 매장</p>
+                            </div>
+                            <button onclick="copyMeituanText('星巴克', this)" class="shrink-0 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 text-[10px] font-bold px-2 py-1.5 rounded flex items-center gap-1 font-mono"><i class="fa-solid fa-copy"></i>星巴克</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 과일/간식 -->
+                <div class="space-y-1.5">
+                    <h4 class="font-bold text-gray-800 text-xs border-b pb-1">🍈 과일 / 간식</h4>
+                    <div class="space-y-1.5">
+                        <div class="bg-gray-50 rounded-lg p-2 flex items-center justify-between gap-2 border border-gray-100">
+                            <div class="min-w-0">
+                                <p class="font-bold text-gray-800 text-[11px]">하미과</p>
+                                <p class="text-gray-500 text-[10px]">달콤하고 아삭한 식감이 매력적인 주황색 멜론</p>
+                            </div>
+                            <button onclick="copyMeituanText('哈密瓜', this)" class="shrink-0 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 text-[10px] font-bold px-2 py-1.5 rounded flex items-center gap-1 font-mono"><i class="fa-solid fa-copy"></i>哈密瓜</button>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-2 flex items-center justify-between gap-2 border border-gray-100">
+                            <div class="min-w-0">
+                                <p class="font-bold text-gray-800 text-[11px]">납작복숭아</p>
+                                <p class="text-gray-500 text-[10px]">납작한 모양에 당도가 높아 여행객들이 꼭 찾는 과일</p>
+                            </div>
+                            <button onclick="copyMeituanText('扁桃子', this)" class="shrink-0 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 text-[10px] font-bold px-2 py-1.5 rounded flex items-center gap-1 font-mono"><i class="fa-solid fa-copy"></i>扁桃子</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 마트/기념품 -->
+                <div class="space-y-1.5">
+                    <h4 class="font-bold text-gray-800 text-xs border-b pb-1">🛍️ 마트 / 기념품</h4>
+                    <div class="space-y-1.5">
+                        <div class="bg-gray-50 rounded-lg p-2 flex items-center justify-between gap-2 border border-gray-100">
+                            <div class="min-w-0">
+                                <p class="font-bold text-gray-800 text-[11px]">세다람쥐</p>
+                                <p class="text-gray-500 text-[10px]">견과류와 다양한 간식류로 유명한 브랜드</p>
+                            </div>
+                            <button onclick="copyMeituanText('三只松鼠', this)" class="shrink-0 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 text-[10px] font-bold px-2 py-1.5 rounded flex items-center gap-1 font-mono"><i class="fa-solid fa-copy"></i>三只松鼠</button>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-2 flex items-center justify-between gap-2 border border-gray-100">
+                            <div class="min-w-0">
+                                <p class="font-bold text-gray-800 text-[11px]">따룬파</p>
+                                <p class="text-gray-500 text-[10px]">대형 마트 브랜드로 다양한 식료품과 기념품 구매 가능</p>
+                            </div>
+                            <button onclick="copyMeituanText('大润发', this)" class="shrink-0 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 text-[10px] font-bold px-2 py-1.5 rounded flex items-center gap-1 font-mono"><i class="fa-solid fa-copy"></i>大润发</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button onclick="closeMeituanModal()" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white text-xs font-bold py-2.5 rounded-xl transition shadow-md mt-2">완료</button>
+        </div>
+    </div>
+
+    <!-- BUDGET MODAL (Updated with user's exact parameters: Hotel 300k, Food 250k, Show 40k, etc.) -->
     <div id="budget-modal" class="hidden fixed inset-0 z-[100] bg-black/60 flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-2xl relative overflow-y-auto max-h-[90vh] no-scrollbar">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl relative overflow-y-auto max-h-[85vh] no-scrollbar">
             <button onclick="closeBudgetModal()" class="absolute right-4 top-4 text-gray-400 hover:text-gray-600">
                 <i class="fa-solid fa-xmark text-lg"></i>
             </button>
@@ -703,66 +1358,66 @@
                 <i class="fa-solid fa-wallet text-xl"></i>
                 <h3 class="font-bold text-lg text-gray-900">4박 5일 간이 예산 계산기</h3>
             </div>
-            <p class="text-[11px] text-gray-400">대략적인 1인당 소요 예상비용을 모의 계산해보세요.</p>
+            <p class="text-[11px] text-gray-400">2인 기준 예상 소요 비용 (원화 환산)</p>
             
-            <div class="space-y-3 text-xs">
-                <!-- Flight Costs -->
+            <div class="space-y-2.5 text-xs">
+                <h4 class="font-bold text-gray-500 text-[11px] pt-1 flex items-center"><i class="fa-solid fa-circle-check text-blue-500 mr-1.5"></i>결제 완료 (항공 + 숙소)</h4>
+
+                <!-- Flight Costs (Fixed, paid category, 2 people) -->
                 <div class="flex justify-between items-center bg-gray-50 p-2.5 rounded-xl">
-                    <span class="text-gray-700 font-medium">✈️ 왕복 항공비 (1인 부담)</span>
-                    <input type="number" id="budget-flight" value="325000" class="w-24 text-right bg-white border border-gray-300 rounded px-2 py-1 font-bold text-gray-800" oninput="calculateTotalBudget()"> 원
+                    <span class="text-gray-700 font-medium">✈️ 왕복 항공비 (2인)</span>
+                    <input type="number" id="budget-flight" value="650000" class="w-24 text-right bg-white border border-gray-300 rounded px-2 py-1 font-bold text-gray-800" oninput="calculatePaidSubtotal()"> 원
                 </div>
                 
-                <!-- Accommodation Budget (Per person / 4 nights) -->
-                <div class="bg-gray-50 p-2.5 rounded-xl space-y-2">
-                    <div class="flex justify-between items-center">
-                        <span class="text-gray-700 font-bold">🏨 숙소 예산 합계 (1인분)</span>
-                        <div>
-                            <input type="number" id="budget-hotel" value="210000" class="w-24 text-right bg-white border border-gray-300 rounded px-2 py-1 font-bold text-gray-800" oninput="calculateTotalBudget()"> 원
-                        </div>
-                    </div>
-                    
-                    <!-- Sourced Hotel Price Details Breakdown (Summer 2026 Season estimates) -->
-                    <div class="border-t border-gray-200/60 pt-2 space-y-1.5 text-[10px] text-gray-500">
-                        <p class="font-bold text-emerald-800 text-[11px] mb-1">💡 4박 최저가 세부 내용 (2인실 나눗셈 반영):</p>
-                        <div class="flex justify-between">
-                            <span>• 1일차: 아투어 공항 (확정)</span>
-                            <span class="font-medium text-gray-700">34,923원 <span class="text-gray-400">(69,846원/2)</span></span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>• 2일차: 나라다 리조트 온천 (최저가)</span>
-                            <span class="font-medium text-gray-700">69,000원 <span class="text-gray-400">(약 138,000원/2)</span></span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>• 3일차: 시내 오렌지/푸신 (가성비)</span>
-                            <span class="font-medium text-gray-700">39,000원 <span class="text-gray-400">(약 78,000원/2)</span></span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>• 4일차: 윈덤 황다오 (축제 혜택)</span>
-                            <span class="font-medium text-gray-700">67,000원 <span class="text-gray-400">(약 134,000원/2)</span></span>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Other Utilities -->
+                <!-- Accommodation (paid category, 2 people) -->
                 <div class="flex justify-between items-center bg-gray-50 p-2.5 rounded-xl">
-                    <span class="text-gray-700 font-medium">🚕 교통비 (택시/지하철)</span>
-                    <input type="number" id="budget-taxi" value="100000" class="w-24 text-right bg-white border border-gray-300 rounded px-2 py-1 font-bold text-gray-800" oninput="calculateTotalBudget()"> 원
-                </div>
-                <div class="flex justify-between items-center bg-gray-50 p-2.5 rounded-xl">
-                    <span class="text-gray-700 font-medium">🍔 식비 / 맥주축제 / 야시장</span>
-                    <input type="number" id="budget-food" value="200000" class="w-24 text-right bg-white border border-gray-300 rounded px-2 py-1 font-bold text-gray-800" oninput="calculateTotalBudget()"> 원
-                </div>
-                <div class="flex justify-between items-center bg-gray-50 p-2.5 rounded-xl">
-                    <span class="text-gray-700 font-medium">🛍️ 쇼핑 / 메이크업 / 기념품</span>
-                    <input type="number" id="budget-shopping" value="30000" class="w-24 text-right bg-white border border-gray-300 rounded px-2 py-1 font-bold text-gray-800" oninput="calculateTotalBudget()"> 원
+                    <span class="text-gray-700 font-medium">🏨 숙소 4박 합계 (2인)</span>
+                    <input type="number" id="budget-hotel" value="600000" class="w-24 text-right bg-white border border-gray-300 rounded px-2 py-1 font-bold text-gray-800" oninput="calculatePaidSubtotal()"> 원
                 </div>
 
-                <div class="bg-emerald-50 p-3 rounded-2xl flex justify-between items-center border border-emerald-100 mt-4">
-                    <span class="font-bold text-emerald-900">💵 총 예상합계 (1인)</span>
-                    <span id="total-budget" class="font-black text-emerald-600 text-sm">865,000 원</span>
+                <div class="bg-blue-50 p-2.5 rounded-xl flex justify-between items-center border border-blue-100">
+                    <span class="font-bold text-blue-900 text-[11px]">💳 결제 완료 소계 (합계 미포함)</span>
+                    <span id="paid-subtotal" class="font-black text-blue-600 text-xs">1,250,000 원</span>
+                </div>
+
+                <h4 class="font-bold text-gray-500 text-[11px] pt-2 flex items-center"><i class="fa-solid fa-money-bill-wave text-emerald-500 mr-1.5"></i>여행 경비 (현지 지출)</h4>
+
+                <!-- Food (travel expense category, 2 people) -->
+                <div class="flex justify-between items-center bg-gray-50 p-2.5 rounded-xl">
+                    <span class="text-gray-700 font-medium">🍔 식비 / 훠궈 / 맥주 (2인)</span>
+                    <input type="number" id="budget-food" value="500000" class="w-24 text-right bg-white border border-gray-300 rounded px-2 py-1 font-bold text-gray-800" oninput="calculateTotalBudget()"> 원
+                </div>
+
+                <!-- Show/Tours (travel expense category, 2 people) -->
+                <div class="flex justify-between items-center bg-gray-50 p-2.5 rounded-xl">
+                    <span class="text-gray-700 font-medium">🎟️ 관광 / 공연 입장료 (2인)</span>
+                    <input type="number" id="budget-tour" value="80000" class="w-24 text-right bg-white border border-gray-300 rounded px-2 py-1 font-bold text-gray-800" oninput="calculateTotalBudget()"> 원
+                </div>
+
+                <!-- Utilities/Transport (travel expense category, 2 people) -->
+                <div class="flex justify-between items-center bg-gray-50 p-2.5 rounded-xl">
+                    <span class="text-gray-700 font-medium">🚕 교통비 (택시/지하철, 2인)</span>
+                    <input type="number" id="budget-taxi" value="72000" class="w-24 text-right bg-white border border-gray-300 rounded px-2 py-1 font-bold text-gray-800" oninput="calculateTotalBudget()"> 원
+                </div>
+
+                <!-- Massage (travel expense category, 2 people) -->
+                <div class="flex justify-between items-center bg-gray-50 p-2.5 rounded-xl">
+                    <span class="text-gray-700 font-medium">💆 마사지 / 헤드스파 (2인)</span>
+                    <input type="number" id="budget-massage" value="106000" class="w-24 text-right bg-white border border-gray-300 rounded px-2 py-1 font-bold text-gray-800" oninput="calculateTotalBudget()"> 원
+                </div>
+
+                <!-- Shopping/Souvenirs (travel expense category, 2 people) -->
+                <div class="flex justify-between items-center bg-gray-50 p-2.5 rounded-xl">
+                    <span class="text-gray-700 font-medium">🛍️ 기념품 / 쇼핑 (고정, 2인)</span>
+                    <input type="number" id="budget-shopping" value="60000" class="w-24 text-right bg-white border border-gray-300 rounded px-2 py-1 font-bold text-gray-800" oninput="calculateTotalBudget()"> 원
+                </div>
+
+                <div class="bg-emerald-50 p-3 rounded-2xl flex justify-between items-center border border-emerald-100 mt-3">
+                    <span class="font-bold text-emerald-900">💵 여행 경비 총 합계 (2인)</span>
+                    <span id="total-budget" class="font-black text-emerald-600 text-sm">818,000 원</span>
                 </div>
             </div>
-            <button onclick="closeBudgetModal()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-3 rounded-xl transition shadow-md mt-4">완료</button>
+            <button onclick="closeBudgetModal()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2.5 rounded-xl transition shadow-md mt-2">완료</button>
         </div>
     </div>
 
@@ -773,23 +1428,19 @@
 
     <!-- Scripts -->
     <script>
-        // Tab switching logic for 5 Days
+        // Tab switching logic
         function switchTab(dayNum) {
-            // Hide all tab contents
             const contents = document.querySelectorAll('.tab-content');
             contents.forEach(content => content.classList.add('hidden'));
 
-            // Show target content
             document.getElementById(`content-${dayNum}`).classList.remove('hidden');
 
-            // Reset tab button styles
             const buttons = document.querySelectorAll('.tab-btn');
             buttons.forEach(btn => {
                 btn.classList.remove('bg-white', 'text-red-600', 'text-indigo-600', 'text-teal-600', 'text-emerald-600', 'text-yellow-600', 'shadow-sm', 'font-bold');
                 btn.classList.add('text-gray-500', 'font-medium');
             });
 
-            // Set dynamic colors matching each day theme
             const activeBtn = document.getElementById(`tab-${dayNum}`);
             activeBtn.classList.remove('text-gray-500', 'font-medium');
             activeBtn.classList.add('bg-white', 'shadow-sm', 'font-bold');
@@ -800,11 +1451,10 @@
             else if (dayNum === 4) activeBtn.classList.add('text-emerald-600');
             else if (dayNum === 5) activeBtn.classList.add('text-yellow-600');
 
-            // Recalculate achievement progress bar for current day
             updateProgress();
         }
 
-        // Live Dynamic Checkbox Tracker
+        // Live Checkbox Progress Tracker
         function updateProgress() {
             const currentTab = document.querySelector('.tab-content:not(.hidden)');
             const checkboxes = currentTab.querySelectorAll('.todo-check');
@@ -818,49 +1468,182 @@
             const progressText = document.getElementById('progress-text');
             
             progressBar.style.width = `${percentage}%`;
-            progressText.innerText = `${percentage}%`;
 
-            // Dynamic color shift depending on progress
             if (percentage === 100) {
-                progressText.innerHTML = `<span class="text-green-600 font-black"><i class="fa-solid fa-circle-check"></i> 오늘일정 완수!</span>`;
+                progressText.innerHTML = `<span class="text-green-600 font-black"><i class="fa-solid fa-circle-check"></i> 오늘일정 완료!</span>`;
             } else {
                 progressText.innerText = `${percentage}%`;
             }
         }
 
-        // Budget Calculations (Updated with Sourced/Calculated totals)
+        // Budget Calculations
+        // "여행 경비" 카테고리(식비/투어/교통비/마사지/쇼핑)만 총 합계에 반영
         function calculateTotalBudget() {
-            const flight = parseInt(document.getElementById('budget-flight').value) || 0;
-            const hotel = parseInt(document.getElementById('budget-hotel').value) || 0;
-            const taxi = parseInt(document.getElementById('budget-taxi').value) || 0;
             const food = parseInt(document.getElementById('budget-food').value) || 0;
+            const tour = parseInt(document.getElementById('budget-tour').value) || 0;
+            const taxi = parseInt(document.getElementById('budget-taxi').value) || 0;
+            const massage = parseInt(document.getElementById('budget-massage').value) || 0;
             const shopping = parseInt(document.getElementById('budget-shopping').value) || 0;
 
-            const total = flight + hotel + taxi + food + shopping;
+            const total = food + tour + taxi + massage + shopping;
             document.getElementById('total-budget').innerText = total.toLocaleString() + ' 원';
         }
 
+        // "결제 완료" 카테고리(항공+숙소) 소계 - 총 합계에는 포함되지 않음
+        function calculatePaidSubtotal() {
+            const flight = parseInt(document.getElementById('budget-flight').value) || 0;
+            const hotel = parseInt(document.getElementById('budget-hotel').value) || 0;
+
+            const paidTotal = flight + hotel;
+            document.getElementById('paid-subtotal').innerText = paidTotal.toLocaleString() + ' 원';
+        }
+
         // Modals Management
-        function openTipModal() {
-            document.getElementById('tip-modal').classList.remove('hidden');
-        }
-        function closeTipModal() {
-            document.getElementById('tip-modal').classList.add('hidden');
+        function openTipModal() { document.getElementById('tip-modal').classList.remove('hidden'); }
+        function closeTipModal() { document.getElementById('tip-modal').classList.add('hidden'); }
+
+        function openBudgetModal() { document.getElementById('budget-modal').classList.remove('hidden'); }
+        function closeBudgetModal() { document.getElementById('budget-modal').classList.add('hidden'); }
+
+        function openRecommendModal() { document.getElementById('recommend-modal').classList.remove('hidden'); }
+        function closeRecommendModal() { document.getElementById('recommend-modal').classList.add('hidden'); }
+
+        function openMeituanModal() { document.getElementById('meituan-modal').classList.remove('hidden'); }
+        function closeMeituanModal() { document.getElementById('meituan-modal').classList.add('hidden'); }
+
+        // Meituan search term copy-to-clipboard
+        function copyMeituanText(text, btnEl) {
+            const showCopied = () => {
+                const originalHTML = btnEl.innerHTML;
+                btnEl.innerHTML = '<i class="fa-solid fa-check"></i>복사됨';
+                btnEl.classList.add('bg-green-100', 'text-green-700');
+                btnEl.classList.remove('bg-yellow-100', 'text-yellow-700');
+                setTimeout(() => {
+                    btnEl.innerHTML = originalHTML;
+                    btnEl.classList.remove('bg-green-100', 'text-green-700');
+                    btnEl.classList.add('bg-yellow-100', 'text-yellow-700');
+                }, 1200);
+            };
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(showCopied).catch(() => {
+                    fallbackCopy(text);
+                    showCopied();
+                });
+            } else {
+                fallbackCopy(text);
+                showCopied();
+            }
         }
 
-        function openBudgetModal() {
-            document.getElementById('budget-modal').classList.remove('hidden');
-        }
-        function closeBudgetModal() {
-            document.getElementById('budget-modal').classList.add('hidden');
+        function fallbackCopy(text) {
+            const tempInput = document.createElement("textarea");
+            tempInput.value = text;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand("copy");
+            document.body.removeChild(tempInput);
         }
 
-        // Custom Share Simulator using clipboard API
+        // ===== Route Map (Day-by-day itinerary map, Triple-style) =====
+        let routeMapInstance = null;
+
+        // 참고용 근사 좌표 (정확한 위치는 각 일정의 고덕지도 링크 확인)
+        const dayRoutes = {
+            1: [
+                { name: '칭다오 교동국제공항 도착', lat: 36.3614, lng: 120.3743 },
+                { name: '포시즌스 페어뷰 호텔', lat: 36.3550, lng: 120.3790 }
+            ],
+            2: [
+                { name: '크리스탈 오렌지 호텔(짐 보관)', lat: 36.0646, lng: 120.3821 },
+                { name: '점심(선가어수교/라오팡즈)', lat: 36.0646, lng: 120.3821 },
+                { name: '소어산 공원', lat: 36.0577, lng: 120.3325 },
+                { name: '칭다오 맥주박물관', lat: 36.0862, lng: 120.3487 },
+                { name: '성 미카엘 대성당', lat: 36.0648, lng: 120.3132 },
+                { name: '잔교 & 소청도 공원', lat: 36.0540, lng: 120.3125 },
+                { name: '용가 훠궈', lat: 36.0910, lng: 120.3660 },
+                { name: '타이동 야시장', lat: 36.0915, lng: 120.3665 },
+                { name: '구적족도', lat: 36.0800, lng: 120.3700 },
+                { name: '크리스탈 오렌지 호텔(복귀)', lat: 36.0646, lng: 120.3821 }
+            ],
+            3: [
+                { name: '크리스탈 오렌지 호텔', lat: 36.0646, lng: 120.3821 },
+                { name: '제3 해수욕장', lat: 36.0505, lng: 120.3550 },
+                { name: '라이즈해산물', lat: 36.0625, lng: 120.3790 },
+                { name: '라오산 실크로드', lat: 36.1734, lng: 120.6382 },
+                { name: '헤드스파(시내)', lat: 36.0750, lng: 120.3780 },
+                { name: '대홍문/무예슬거', lat: 36.0700, lng: 120.3800 },
+                { name: '5.4 광장', lat: 36.0637, lng: 120.3831 },
+                { name: '크리스탈 오렌지 호텔(복귀)', lat: 36.0646, lng: 120.3821 }
+            ],
+            4: [
+                { name: '크리스탈 오렌지 호텔(체크아웃)', lat: 36.0646, lng: 120.3821 },
+                { name: '완샹청', lat: 36.0646, lng: 120.3821 },
+                { name: '임프레션 호텔(금사탄)', lat: 35.9917, lng: 120.1858 },
+                { name: '금사탄 세계 맥주축제', lat: 35.9930, lng: 120.1840 }
+            ],
+            5: [
+                { name: '임프레션 호텔(금사탄)', lat: 35.9917, lng: 120.1858 },
+                { name: '완샹청 (쇼핑)', lat: 36.0646, lng: 120.3821 },
+                { name: '칭다오 교동국제공항 (귀국)', lat: 36.3614, lng: 120.3743 }
+            ]
+        };
+
+        function openRouteMap() {
+            const activeTabContent = document.querySelector('.tab-content:not(.hidden)');
+            const dayNum = activeTabContent ? parseInt(activeTabContent.id.split('-')[1]) : 1;
+
+            document.getElementById('route-map-title').innerText = `Day ${dayNum} 동선 지도`;
+            document.getElementById('route-map-modal').classList.remove('hidden');
+
+            // 모달 레이아웃이 잡힌 뒤 지도를 초기화해야 타일이 정상 렌더링됨
+            setTimeout(() => renderRouteMap(dayNum), 80);
+        }
+
+        function closeRouteMapModal() {
+            document.getElementById('route-map-modal').classList.add('hidden');
+        }
+
+        function renderRouteMap(dayNum) {
+            const points = dayRoutes[dayNum];
+            if (!points || typeof L === 'undefined') return;
+
+            if (routeMapInstance) {
+                routeMapInstance.remove();
+                routeMapInstance = null;
+            }
+
+            routeMapInstance = L.map('route-map', { scrollWheelZoom: true });
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(routeMapInstance);
+
+            const latlngs = points.map(p => [p.lat, p.lng]);
+
+            points.forEach((p, idx) => {
+                const icon = L.divIcon({
+                    html: `<div style="background:#ef4444;color:#fff;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:bold;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.4);">${idx + 1}</div>`,
+                    className: '',
+                    iconSize: [22, 22],
+                    iconAnchor: [11, 11]
+                });
+                L.marker([p.lat, p.lng], { icon }).addTo(routeMapInstance).bindPopup(`${idx + 1}. ${p.name}`);
+            });
+
+            L.polyline(latlngs, { color: '#ef4444', weight: 3, dashArray: '6,6' }).addTo(routeMapInstance);
+            routeMapInstance.fitBounds(latlngs, { padding: [30, 30] });
+
+            // Leaflet은 숨겨진 상태에서 초기화되면 크기 계산이 어긋날 수 있어 재계산
+            setTimeout(() => routeMapInstance.invalidateSize(), 100);
+
+            // 하단 범례(순서 목록) 렌더링
+            const legend = document.getElementById('route-map-legend');
+            legend.innerHTML = points.map((p, idx) => `<div>${idx + 1}. ${p.name}</div>`).join('');
+        }
+
+        // Share
         function shareItinerary() {
-            // Simulated share link
-            const shareText = `칭다오 4박 5일 최적 이동 일정표를 함께 공유합니다! (1일차: 아투어 공항숙박 ➡️ 2일차: 나라다 온천&한푸체험 ➡️ 3일차: 올드타운/타이동야시장 ➡️ 4일차: 라오산/금사탄 맥주축제 ➡️ 5일차: 요트경기장/귀국)`;
-            
-            // Native iframe friendly clipboard copy logic
             const tempInput = document.createElement("input");
             tempInput.value = window.location.href;
             document.body.appendChild(tempInput);
@@ -868,7 +1651,6 @@
             document.execCommand("copy");
             document.body.removeChild(tempInput);
 
-            // Pop toast alert
             const toast = document.getElementById('toast');
             toast.classList.remove('hidden');
             setTimeout(() => { toast.classList.add('opacity-100'); }, 50);
@@ -878,11 +1660,10 @@
             }, 2500);
         }
 
-        // Initialize progress tracker when application loaded
         window.onload = function() {
             updateProgress();
-            // Initial call to ensure the summed total starts accurate
             calculateTotalBudget();
+            calculatePaidSubtotal();
         };
     </script>
 </body>
